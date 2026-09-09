@@ -1,0 +1,43 @@
+{                                                                                        
+       "summary": "Добавлен endpoint POST /api/reviews, который передаёт входной diff в       
+     новый метод ReviewService.review. Сервис формирует prompt с полным diff и возвращает     
+     строковый комментарий в поле comment. Изменён только стиль объявления метода Protocol.   
+     ",                                                                                       
+       "risks": [                                                                             
+         {                                                                                    
+           "file": "app/review_service.py",                                                   
+           "line": 20,                                                                        
+           "evidence": "prompt = f\"Review this pull request and find problems:\\n{diff}\"",  
+           "risk": "SEC-1: diff отправляется во внешний LLM без удаления/маскирования         
+     секретов."                                                                               
+         },                                                                                   
+         {                                                                                    
+           "file": "app/review_service.py",                                                   
+           "line": 22,                                                                        
+           "evidence": "return {\"comment\": answer}",                                        
+           "risk": "OUT-1: формат ответа не соответствует требуемым полям summary/risks/      
+     checks."                                                                                 
+         },                                                                                   
+         {                                                                                    
+           "file": "app/api.py",                                                              
+           "line": 36,                                                                        
+           "evidence": "def create_review(payload: dict) -> dictstr, str:\n    return         
+     review_service.review(payload\"diff\")",                                                 
+           "risk": "API-1: отсутствует проверка длины diff и возврат 413 для >20 000          
+     символов."                                                                               
+         }                                                                                    
+       ],                                                                                     
+       "checks": [                                                                            
+         "SEC-1: вызвать сервис с diff, содержащим тестовый секрет (например, \"token=TEST\   
+     "); с заглушкой LLM убедиться, что в отправляемом prompt секрет замаскирован как         
+     REDACTED.",                                                                              
+         "API-1: отправить diff длиной 20 001 символ и убедиться, что API возвращает HTTP     
+     413.",                                                                                   
+         "OUT-1: вызвать POST /api/reviews и проверить, что ответ содержит summary, risks (   
+     <=3), checks; текущее поведение вернёт поле comment — зафиксировать несоответствие.",    
+         "Валидация входа: отправить POST /api/reviews без поля diff и ожидать 422            
+     Unprocessable Entity вместо 500.",                                                       
+         "REL-1: смоделировать таймаут/исключение из LLM и проверить, что сервис возвращает   
+     контролируемый ответ в рамках 10 секунд."                                                
+       ]                                                                                      
+     }
