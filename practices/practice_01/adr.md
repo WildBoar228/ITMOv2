@@ -40,14 +40,14 @@ flowchart LR
     Validate -- >20k --> HTTP413[HTTP 413]
     Validate -- ok --> Sanitize[Маскирование секретов]
     Sanitize --> Prompt[Формирование prompt]
-    Prompt --> LLM[Внешний LLM (timeout 10с)]
+    Prompt --> LLM["Внешний LLM (timeout 10с)"]
     LLM --> Normalize[Нормализация в OUT-1]
     Normalize --> Result[JSON summary+risks+checks]
 ```
 
 ## Как использовали AI
 
-- Для чего:
-- Тип промпта:
-- Строка в [`prompts.md`](prompts.md):
-- Что проверили и исправили сами:
+- Для чего: заполнение файла
+- Тип промпта: master prompt
+- Строка в [`prompts.md`](prompts.md): P1-04
+- Что проверили и исправили сами: была ошибка компиляции в flowchart-схеме из-за скобок в тексте на ноде, взял текст в кавычки

@@ -29,8 +29,8 @@ flowchart LR
     P --> T[Вызов LLM c timeout 10с]
     T -- ошибка/таймаут --> R1[Контролируемый ответ: summary+risks+checks]
     T -- успех --> R2[Нормализация ответа в OUT-1]
-    R1 --> D[JSON: summary, risks(≤3), checks]
-    R2 --> D[JSON: summary, risks(≤3), checks]
+    R1 --> D["JSON: summary, risks(≤3), checks"]
+    R2 --> D["JSON: summary, risks(≤3), checks"]
 ```
 
 ## Разница
@@ -45,7 +45,7 @@ flowchart LR
 
 ## Как использовали AI
 
-- Для чего:
-- Тип промпта:
-- Строка в [`prompts.md`](prompts.md):
-- Что проверили и исправили сами:
+- Для чего: заполнение файла
+- Тип промпта: master prompt
+- Строка в [`prompts.md`](prompts.md): P1-04
+- Что проверили и исправили сами: была ошибка компиляции в flowchart-схеме из-за скобок в тексте на ноде, взял текст в кавычки
