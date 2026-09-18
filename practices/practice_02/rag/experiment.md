@@ -22,9 +22,43 @@
 
 Черновик правок основан на правилах CASE (REL-1, OUT-1, API-1) и примерах в интеграционных/E2E тестах. REL-1 требует timeout 10 секунд и контролируемого ответа при ошибках — добавлен сценарий Error storm под нагрузкой, где pass/fail: ответ ≤10с и соответствие OUT-1 (CASE.md, строки 66–71). OUT-1 — структурированный ответ (summary, risks≤3, checks) — проверяется даже в деградации. API-1 — 413 для diff > 20000 — добавлены сценарии валидации под нагрузкой (также 422 при отсутствии diff), взято из практик integration/e2e. Также добавлены разделы Environment и Metrics & Evidence для воспроизводимости.
 
+## Исправленный результат
+
+```
+# Нагрузочные проверки
+
+Сейчас сервис ограничен учебным сценарием и зависит от внешнего LLM; полноценные нагрузочные испытания с реальным LLM нецелесообразны из-за стоимости и лимитов. Условие для проведения: план интеграции в CI/CD и ожидание ≥ 1000 вызовов в день либо подключение к платному LLM с согласованным бюджетом.
+
+### Environment
+- Runner: Linux x86_64; 4 vCPU, 8 GB RAM; веб-сервер: 4 воркера
+- Concurrency: X клиентов генератора
+- LLM stub: fast-ok / error-storm; таймаут обёртки 10с (REL-1)
+
+### Metrics & Evidence
+- Метрики: p50/p95/p99 latency, error rate 4xx/5xx, CPU/RAM
+- Evidence: perf_report.json, codes_summary.csv, stub_llm.log, out1_check.log
+
+__При соблюдении условий выше__, план:
+
+| Сценарий | Нагрузка и длительность | Критерии pass/fail | Что измеряем | Evidence |
+|---|---|---|---|---|
+| Stable baseline | 10 RPS, 5 мин, fast-ok | 0 5xx; OUT-1 на успешных; все ответы ≤10с | latency, codes, ресурсы | perf_report.json, codes_summary.csv, out1_check.log |
+| Error storm (REL-1) | 50 RPS, 2 мин, error-storm | Все ошибки/таймауты → контролируемые ответы ≤10с и соответствуют OUT-1 | деградация, error rate | perf_report.json, stub_llm.log, out1_check.log |
+| Validation under load (API-1/422) | 30 RPS, 3 мин, микс | 100% 413 для diff>20000; 100% 422 при отсутствии diff | codes breakdown | codes_summary.csv |
+
+## Как использовали AI
+
+- Строка в [`prompts.md`](prompts.md): P1-04
+- Что проверили и исправили сами: связали pass/fail с CASE; добавили источники и Evidence.
+```
+
 ## Что изменили в исходном артефакте
 
 - Файл и раздел:
+`practices/practice_01/tests_load.md`, шапка и таблица сценариев, новые разделы.
 - Изменение:
+Добавлены Environment, Metrics & Evidence; сценарии Error storm и Validation under load; связь pass/fail с REL-1/OUT-1/API-1.
 - Как проверили ссылки:
+Сопоставили формулировки с CASE.md (стр. 64–71), tests_integration.md и tests_e2e.md; проверили консистентность с analysis.md TO BE.
 - Что отклонили как неподтверждённое:
+Любые SLO на p95 вне правил CASE; требования логгировать содержимое diff.

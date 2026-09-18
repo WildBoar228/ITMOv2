@@ -22,12 +22,20 @@
 2) Добавь разделы Environment и Metrics & Evidence: ресурсы/воркеры/раннер/профиль заглушки; метрики p50/p95/p99, error rate 4xx/5xx, CPU/RAM; имена артефактов.
 3) Расширь таблицу сценариев: Error storm (REL-1+OUT-1), Validation under load (API-1/422), а также базовые стабильные запросы без произвольных KPI.
 
+## Исправленный результат
+См. изменённый файл: [tests_load.md](tests_load.md)
+
 ## Что получили
 
+Сгенерированная версия соответствует good-примеру: добавлены Environment и Metrics & Evidence, сценарии Error storm и Validation under load; убраны произвольные KPI на задержку.
 
 ## Что изменили в исходном артефакте
 
 - Файл и раздел:
+`practices/practice_01/tests_load.md`, основная таблица и новые разделы.
 - Изменение:
+Добавлены Environment и Metrics & Evidence; расширены сценарии Error storm и Validation under load; убраны произвольные пороги задержек, pass/fail привязан к REL-1/OUT-1/API-1.
 - Как проверили:
+Сравнили с CASE.md (REL-1, OUT-1, API-1) и примерами из integration/e2e; проверили, что Evidence содержит конкретные артефакты и метрики p50/p95/p99 и error breakdown.
 - Что отклонили:
+SLO по p95 без связи с правилами CASE; нагрузку на реальный LLM.

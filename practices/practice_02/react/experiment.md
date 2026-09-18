@@ -40,3 +40,27 @@
 - Изменение:
 - Как проверили:
 - Что отклонили:
+
+## Запрос
+
+Пошагово подготовь минимальные правки к `practices/practice_01/tests_load.md`:
+1) Определи, какие сценарии и критерии pass/fail нужны для REL-1 (<=10с, контролируемый ответ) и OUT-1 под нагрузкой.
+2) Изучи CASE.md (стр. 64–71) и артефакты Практики 1 (integration/e2e/analysis) для примеров формулировок.
+3) Сгенерируй текст разделов Environment и Metrics & Evidence и обновлённую таблицу сценариев: Stable baseline; Error storm (REL-1+OUT-1); Validation under load (API-1/422). Не вводи произвольные latency-пороги.
+4) Перечисли Evidence-артефакты (perf_report.json, codes_summary.csv, stub_llm.log, out1_check.log) и метрики (p50/p95/p99, error rate 4xx/5xx, CPU/RAM).
+5) Спроси у владельца значения RPS и длительности для каждого сценария.
+
+## Исправленный результат
+
+См. изменённый файл: [tests_load.md](tests_load.md)
+
+## Что изменили в исходном артефакте
+
+- Файл и раздел:
+`practices/practice_01/tests_load.md`, таблица сценариев и новые разделы.
+- Изменение:
+Добавлены Environment и Metrics & Evidence; расширена таблица сценариев и привязка pass/fail к REL-1/OUT-1/API-1.
+- Как проверили:
+Проверили соответствие CASE.md и согласованность с tests_integration.md/tests_e2e.md.
+- Что отклонили:
+Произвольные цели p95; нагрузку на реальный LLM.
