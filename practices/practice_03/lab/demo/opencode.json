@@ -32,6 +32,19 @@
         "glob": "allow",
         "grep": "allow"
       }
+    },
+    "editor": {
+      "description": "Agent for editing files",
+      "mode": "primary",
+      "prompt": "{file:./repo-system.txt}",
+      "steps": 8,
+      "permission": {
+        "*": "deny",
+        "read": "allow",
+        "edit": "allow",
+        "glob": "allow",
+        "grep": "allow"
+      }
     }
   }
 }
