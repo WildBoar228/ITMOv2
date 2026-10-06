@@ -33,3 +33,15 @@ pytest -q                              # схема decks.json (после до�
 ```
 
 После любой правки `app.js` или `decks.json` запускай проверку и показывай результат пользователю.
+Проверка также запускается автоматически hook `.opencode/plugins/quiz-check.js` после правок в `project/` (runner `tests/check.sh`).
+
+## Skill
+
+- Подключён `test-driven-development` (`.opencode/skills/test-driven-development/SKILL.md`).
+- Перед любой фичей/фиксом в `project/app.js`: сначала падающий тест, показать его провал, затем минимальный код, затем полный прогон проверок из раздела «Команды».
+- Без зафиксированного красного теста production-код не писать.
+
+## MCP
+
+- Подключён `context7` (remote, см. корневой `opencode.json`): свежие доки и примеры кода.
+- Когда нужен внешний API или синтаксис (fetch, таймеры, a11y, CSS) — вызывай `context7` tools (`resolve-library-id` → `get-library-docs`), а не выдумывай по памяти.
