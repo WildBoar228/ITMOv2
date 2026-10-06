@@ -67,3 +67,8 @@ pytest -q                              # схема decks.json (после до�
 
 - Подключён `context7` (remote, см. корневой `opencode.json`): свежие доки и примеры кода.
 - Когда нужен внешний API или синтаксис (fetch, таймеры, a11y, CSS) — вызывай `context7` tools (`resolve-library-id` → `get-library-docs`), а не выдумывай по памяти.
+- Свой сервер `quiz` (local, `mcp/quiz_server.py`, конфиг — местный `opencode.json`):
+  `list_decks`, `get_question` (без `correct` — не подсматривать), `check_answer`
+  (возвращает `correct` + `explain`), `validate_deck` (проверка JSON от quiz-generator
+  перед импортом). Данные читает из `project/data/decks.json`, ничего не пишет.
+  Вопросы по колодам и проверку ответов делай через него, а не чтением JSON руками.

@@ -1,4 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": ["AGENTS.md"]
+  "instructions": ["AGENTS.md"],
+  "mcp": {
+    "quiz": {
+      "type": "local",
+      "command": ["python3", "mcp/quiz_server.py"]
+    }
+  }
 }
