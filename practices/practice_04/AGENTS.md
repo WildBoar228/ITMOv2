@@ -16,6 +16,25 @@
 - Весь текст trim, пустые строки запрещены
 - Пример валидной игры — `demo-it` в `data/decks.json`
 
+## Фича B — правка / удаление игр (реализована)
+
+- Карточка списка (`renderList()` в `app.js`): рядом с «Играть» лежит
+  `.card-actions` с двумя кнопками — `✎` (`.edit-btn` → `startEdit(id)`)
+  и `🗑` (`.delete-btn` → `deleteDeck(id)`). У кнопок есть `title` и `aria-label`.
+- Режим правки: `state.editingId` (`null` = новая игра). `startEdit(id)`
+  загружает deck в редактор, ставит `#editor-title` = «Редактирование»;
+  `openNewEditor()` сбрасывает `editingId`, ставит «Новая игра».
+  Заголовок редактора в `index.html` обязан иметь `id="editor-title"`.
+- Сохранение (`save-deck`): при `editingId` — замена по `findIndex` с
+  сохранением `id` (`{...deck, id: editingId}`), затем сброс `editingId`;
+  без `editingId` — `push` нового. Если deck успел исчезнуть (`idx < 0`) — `push`.
+- Удаление: только через нативный `confirm(«Удалить игру ...»)`; отмена = ничего.
+  Текущий забег игры не трогаем (удаление колоды «под ногами» у играющего — ок).
+- Всё в памяти, персист — только существующий экспорт. `localStorage` запрещён.
+- Стили кнопок — только `style.css` (`.card-actions`, `.icon-btn`).
+- Тесты: `tests/test_feature_b.py` (4 шт., стат-проверки исходника по образцу
+  `test_decks.py`). Схему и таймер не трогает.
+
 ## Правила правок
 
 1. Не меняй схему без обновления `validateDeck()` в `app.js` и `tests/test_decks.py`
