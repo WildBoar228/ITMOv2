@@ -12,7 +12,8 @@
           "Hyperlink Text Mode Logic",
           "Home Tool Management Library"
         ],
-        "correct": 0
+        "correct": 0,
+        "explain": "HTML — язык разметки гипертекста: теги описывают структуру страницы."
       },
       {
         "id": "q2",

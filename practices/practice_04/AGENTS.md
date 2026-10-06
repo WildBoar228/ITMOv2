@@ -7,11 +7,12 @@
 - `project/index.html` — 4 экрана: список / редактор / игра / результат
 - `project/style.css` — тёмная тема, классы `.deck-card`, `.opt-btn`, `.timer`
 - `project/app.js` — вся логика, vanilla JS, константа `TIME_PER_QUESTION = 15`
-- `project/data/decks.json` — массив игр: `{id, title, questions: [{id, q, options[4], correct}]}`
+- `project/data/decks.json` — массив игр: `{id, title, questions: [{id, q, options[4], correct, explain?}]}`
 
 ## Схема decks.json (строгая)
 
 - Вопросов ≥ 1, вариантов ровно 4, `correct` — индекс 0–3
+- `explain` опционален: если есть — строка (пустая = как нет); показывается после ответа
 - Весь текст trim, пустые строки запрещены
 - Пример валидной игры — `demo-it` в `data/decks.json`
 

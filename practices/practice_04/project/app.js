@@ -40,7 +40,8 @@ function validateDeck(d) {
       q.options.length === 4 &&
       Number.isInteger(q.correct) &&
       q.correct >= 0 &&
-      q.correct < 4
+      q.correct < 4 &&
+      (!("explain" in q) || typeof q.explain === "string")
   );
 }
 
@@ -76,8 +77,10 @@ function editorQuestionBlock(value = { q: "", options: ["", "", "", ""], correct
       <button class="btn ghost eq-remove">✕</button>
     </div>
     <div class="opts"></div>
+    <input type="text" class="eq-explain" placeholder="Пояснение (необязательно)" maxlength="300" />
   `;
   div.querySelector(".eq-text").value = value.q;
+  div.querySelector(".eq-explain").value = value.explain ?? "";
   const opts = div.querySelector(".opts");
   const group = "c-" + Math.random().toString(36).slice(2);
   value.options.forEach((text, i) => {
@@ -105,10 +108,13 @@ function collectDeckFromEditor() {
     const radios = [...card.querySelectorAll('.q-opt input[type="radio"]')];
     const options = optInputs.map((i) => i.value.trim());
     const correct = radios.findIndex((r) => r.checked);
+    const explain = card.querySelector(".eq-explain").value.trim();
     if (!q) return { error: `Вопрос ${qi + 1}: пустой текст.` };
     if (options.some((o) => !o)) return { error: `Вопрос ${qi + 1}: заполни все 4 варианта.` };
     if (correct < 0) return { error: `Вопрос ${qi + 1}: выбери правильный ответ.` };
-    questions.push({ id: "q" + (qi + 1), q, options, correct });
+    const item = { id: "q" + (qi + 1), q, options, correct };
+    if (explain) item.explain = explain;
+    questions.push(item);
   }
   return { deck: { id: "deck-" + Date.now(), title, questions } };
 }
@@ -134,6 +140,7 @@ function renderQuestion() {
   $("play-score").textContent = cur.score;
   $("play-question").textContent = q.q;
   $("play-feedback").textContent = "";
+  $("play-explain").textContent = "";
   $("play-next").classList.add("hidden");
 
   const box = $("play-options");
@@ -189,6 +196,7 @@ function answer(idx) {
   }
 
   $("play-score").textContent = cur.score;
+  $("play-explain").textContent = typeof q.explain === "string" ? q.explain : "";
   const last = cur.index === cur.deck.questions.length - 1;
   const next = $("play-next");
   next.textContent = last ? "К результату" : "Далее";

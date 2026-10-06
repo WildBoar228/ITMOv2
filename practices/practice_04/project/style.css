@@ -114,6 +114,15 @@ body {
   background: #12163a;
   color: var(--text);
 }
+.eq-explain {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #343a6e;
+  background: #12163a;
+  color: var(--text);
+}
 .q-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .q-head input { flex: 1; }
 
@@ -141,6 +150,16 @@ body {
 .opt-btn.wrong { background: #5a2230; border-color: var(--danger); }
 
 .big-score { font-size: 54px; font-weight: 900; margin: 10px 0; }
+
+.explain {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent2);
+  background: #12163a;
+  border-radius: 0 10px 10px 0;
+  color: var(--text);
+}
+.explain:empty { display: none; }
 
 @media (max-width: 560px) {
   .topbar { flex-direction: column; gap: 10px; }
