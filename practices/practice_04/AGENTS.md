@@ -60,6 +60,8 @@ pytest -q                              # схема decks.json (после до�
 - Подключён `test-driven-development` (`.opencode/skills/test-driven-development/SKILL.md`).
 - Перед любой фичей/фиксом в `project/app.js`: сначала падающий тест, показать его провал, затем минимальный код, затем полный прогон проверок из раздела «Команды».
 - Без зафиксированного красного теста production-код не писать.
+- Свой скилл `quiz-generator` (`.opencode/skills/quiz-generator/`): генерация игры
+  из учебного текста строго по схеме (`template.md` + самопроверка до выдачи).
 
 ## MCP
 
