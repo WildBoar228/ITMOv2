@@ -1,0 +1,275 @@
+// Baseline: фиксированно 15 сек на вопрос, 4 варианта, без сохранения прогресса.
+const TIME_PER_QUESTION = 15;
+
+const state = {
+  decks: [],
+  current: null, // { deck, index, score, correctCount, locked, timerId, timeLeft }
+};
+
+const $ = (id) => document.getElementById(id);
+
+function showScreen(name) {
+  for (const s of ["list", "editor", "play", "result"]) {
+    $("screen-" + s).classList.toggle("hidden", s !== name);
+  }
+  document.querySelectorAll(".nav-btn").forEach((b) => {
+    b.classList.toggle("active", b.dataset.nav === name || (name === "play" && b.dataset.nav === "list") || (name === "result" && b.dataset.nav === "list"));
+  });
+}
+
+// ---------- Загрузка ----------
+async function loadDecks() {
+  try {
+    const res = await fetch("data/decks.json");
+    if (!res.ok) throw new Error("http " + res.status);
+    const data = await res.json();
+    state.decks = data.filter(validateDeck);
+  } catch (e) {
+    console.warn("Не удалось загрузить data/decks.json:", e);
+    state.decks = [];
+  }
+  renderList();
+}
+
+function validateDeck(d) {
+  if (!d || typeof d.title !== "string" || !Array.isArray(d.questions)) return false;
+  return d.questions.every(
+    (q) =>
+      typeof q.q === "string" &&
+      Array.isArray(q.options) &&
+      q.options.length === 4 &&
+      Number.isInteger(q.correct) &&
+      q.correct >= 0 &&
+      q.correct < 4
+  );
+}
+
+// ---------- Список ----------
+function renderList() {
+  const box = $("deck-list");
+  box.innerHTML = "";
+  if (state.decks.length === 0) {
+    box.innerHTML = "<p class='muted'>Пока нет игр. Создай первую через «+ Новая игра».</p>";
+    return;
+  }
+  state.decks.forEach((deck) => {
+    const card = document.createElement("div");
+    card.className = "deck-card";
+    card.innerHTML = `<h3></h3><div class="muted">${deck.questions.length} вопр. · ⏱ ${TIME_PER_QUESTION}с</div>`;
+    card.querySelector("h3").textContent = deck.title;
+    const btn = document.createElement("button");
+    btn.className = "btn primary";
+    btn.textContent = "Играть";
+    btn.onclick = () => startGame(deck.id);
+    card.appendChild(btn);
+    box.appendChild(card);
+  });
+}
+
+// ---------- Редактор ----------
+function editorQuestionBlock(value = { q: "", options: ["", "", "", ""], correct: 0 }) {
+  const div = document.createElement("div");
+  div.className = "q-card";
+  div.innerHTML = `
+    <div class="q-head">
+      <input type="text" class="eq-text" placeholder="Текст вопроса" maxlength="200" />
+      <button class="btn ghost eq-remove">✕</button>
+    </div>
+    <div class="opts"></div>
+  `;
+  div.querySelector(".eq-text").value = value.q;
+  const opts = div.querySelector(".opts");
+  const group = "c-" + Math.random().toString(36).slice(2);
+  value.options.forEach((text, i) => {
+    const row = document.createElement("label");
+    row.className = "q-opt";
+    row.innerHTML = `<input type="radio" name="${group}" ${i === value.correct ? "checked" : ""} title="Правильный ответ" />
+      <input type="text" placeholder="Вариант ${i + 1}" maxlength="120" />`;
+    row.querySelector('input[type="text"]').value = text;
+    opts.appendChild(row);
+  });
+  div.querySelector(".eq-remove").onclick = () => div.remove();
+  return div;
+}
+
+function collectDeckFromEditor() {
+  const title = $("game-title").value.trim();
+  const cards = [...$("editor-questions").querySelectorAll(".q-card")];
+  if (!title) return { error: "Введи название игры." };
+  if (cards.length === 0) return { error: "Добавь хотя бы один вопрос." };
+  const questions = [];
+  for (let qi = 0; qi < cards.length; qi++) {
+    const card = cards[qi];
+    const q = card.querySelector(".eq-text").value.trim();
+    const optInputs = [...card.querySelectorAll('.q-opt input[type="text"]')];
+    const radios = [...card.querySelectorAll('.q-opt input[type="radio"]')];
+    const options = optInputs.map((i) => i.value.trim());
+    const correct = radios.findIndex((r) => r.checked);
+    if (!q) return { error: `Вопрос ${qi + 1}: пустой текст.` };
+    if (options.some((o) => !o)) return { error: `Вопрос ${qi + 1}: заполни все 4 варианта.` };
+    if (correct < 0) return { error: `Вопрос ${qi + 1}: выбери правильный ответ.` };
+    questions.push({ id: "q" + (qi + 1), q, options, correct });
+  }
+  return { deck: { id: "deck-" + Date.now(), title, questions } };
+}
+
+// ---------- Игра ----------
+function startGame(deckId) {
+  const deck = state.decks.find((d) => d.id === deckId);
+  if (!deck) return;
+  state.current = { deck, index: 0, score: 0, correctCount: 0 };
+  showScreen("play");
+  $("play-title").textContent = deck.title;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const cur = state.current;
+  const q = cur.deck.questions[cur.index];
+  clearInterval(cur.timerId);
+  cur.locked = false;
+  cur.timeLeft = TIME_PER_QUESTION;
+
+  $("play-progress").textContent = `Вопрос ${cur.index + 1} из ${cur.deck.questions.length}`;
+  $("play-score").textContent = cur.score;
+  $("play-question").textContent = q.q;
+  $("play-feedback").textContent = "";
+  $("play-next").classList.add("hidden");
+
+  const box = $("play-options");
+  box.innerHTML = "";
+  q.options.forEach((text, i) => {
+    const b = document.createElement("button");
+    b.className = "opt-btn";
+    b.textContent = text;
+    b.onclick = () => answer(i);
+    box.appendChild(b);
+  });
+
+  updateTimerBar();
+  cur.timerId = setInterval(() => {
+    cur.timeLeft -= 0.2;
+    if (cur.timeLeft <= 0) {
+      cur.timeLeft = 0;
+      updateTimerBar();
+      answer(-1); // таймаут
+      return;
+    }
+    updateTimerBar();
+  }, 200);
+}
+
+function updateTimerBar() {
+  const cur = state.current;
+  $("timer-bar").style.width = (cur.timeLeft / TIME_PER_QUESTION) * 100 + "%";
+}
+
+function answer(idx) {
+  const cur = state.current;
+  if (cur.locked) return;
+  cur.locked = true;
+  clearInterval(cur.timerId);
+
+  const q = cur.deck.questions[cur.index];
+  const buttons = [...$("play-options").children];
+  buttons.forEach((b) => (b.disabled = true));
+  buttons[q.correct].classList.add("correct");
+
+  if (idx === q.correct) {
+    // Бонус за скорость: 10 + оставшиеся секунды
+    const gained = 10 + Math.ceil(cur.timeLeft);
+    cur.score += gained;
+    cur.correctCount += 1;
+    $("play-feedback").textContent = `Верно! +${gained}`;
+  } else if (idx === -1) {
+    $("play-feedback").textContent = "Время вышло!";
+  } else {
+    buttons[idx].classList.add("wrong");
+    $("play-feedback").textContent = "Неверно.";
+  }
+
+  $("play-score").textContent = cur.score;
+  const last = cur.index === cur.deck.questions.length - 1;
+  const next = $("play-next");
+  next.textContent = last ? "К результату" : "Далее";
+  next.classList.remove("hidden");
+  next.onclick = () => {
+    if (last) showResult();
+    else {
+      cur.index += 1;
+      renderQuestion();
+    }
+  };
+}
+
+function showResult() {
+  const cur = state.current;
+  showScreen("result");
+  $("result-score").textContent = `${cur.score} очков`;
+  $("result-detail").textContent = `Правильно: ${cur.correctCount} из ${cur.deck.questions.length} · «${cur.deck.title}»`;
+}
+
+// ---------- События ----------
+document.querySelectorAll(".nav-btn").forEach((b) => {
+  b.onclick = () => {
+    if (b.dataset.nav === "editor") {
+      $("editor-questions").innerHTML = "";
+      $("editor-questions").appendChild(editorQuestionBlock());
+      $("game-title").value = "";
+      $("editor-error").textContent = "";
+      showScreen("editor");
+    } else {
+      showScreen("list");
+    }
+  };
+});
+
+$("add-question").onclick = () => $("editor-questions").appendChild(editorQuestionBlock());
+
+$("save-deck").onclick = () => {
+  const { deck, error } = collectDeckFromEditor();
+  if (error) {
+    $("editor-error").textContent = error;
+    return;
+  }
+  state.decks.push(deck);
+  renderList();
+  showScreen("list");
+};
+
+$("result-retry").onclick = () => startGame(state.current.deck.id);
+$("result-home").onclick = () => showScreen("list");
+
+$("export-all").onclick = () => {
+  const blob = new Blob([JSON.stringify(state.decks, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "decks.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+$("import-file").onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const arr = Array.isArray(data) ? data : [data];
+      const valid = arr.filter(validateDeck);
+      if (valid.length === 0) throw new Error("нет валидных игр");
+      valid.forEach((d) => {
+        if (!d.id) d.id = "deck-" + Date.now() + Math.floor(Math.random() * 1000);
+        state.decks.push(d);
+      });
+      renderList();
+    } catch (err) {
+      alert("Не удалось импортировать: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+};
+
+loadDecks();

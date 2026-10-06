@@ -1,0 +1,54 @@
+[
+  {
+    "id": "demo-it",
+    "title": "Основы IT",
+    "questions": [
+      {
+        "id": "q1",
+        "q": "Что означает HTML?",
+        "options": [
+          "HyperText Markup Language",
+          "HighTech Machine Learning",
+          "Hyperlink Text Mode Logic",
+          "Home Tool Management Library"
+        ],
+        "correct": 0
+      },
+      {
+        "id": "q2",
+        "q": "Какой метод HTTP обычно используется для получения данных?",
+        "options": ["GET", "POST", "DELETE", "RENDER"],
+        "correct": 0
+      },
+      {
+        "id": "q3",
+        "q": "Что такое JSON?",
+        "options": [
+          "Формат обмена данными",
+          "Язык программирования",
+          "База данных",
+          "Протокол передачи видео"
+        ],
+        "correct": 0
+      }
+    ]
+  },
+  {
+    "id": "demo-python",
+    "title": "Python-база",
+    "questions": [
+      {
+        "id": "q1",
+        "q": "Какой тип у выражения [1, 2, 3]?",
+        "options": ["list", "tuple", "dict", "set"],
+        "correct": 0
+      },
+      {
+        "id": "q2",
+        "q": "Что выведет len(\"abc\")?",
+        "options": ["3", "2", "0", "ошибка"],
+        "correct": 0
+      }
+    ]
+  }
+]
