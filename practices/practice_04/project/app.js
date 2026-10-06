@@ -4,6 +4,7 @@ const TIME_PER_QUESTION = 15;
 const state = {
   decks: [],
   current: null, // { deck, index, score, correctCount, locked, timerId, timeLeft }
+  editingId: null, // id колоды в режиме правки, иначе null
 };
 
 const $ = (id) => document.getElementById(id);
@@ -63,8 +64,55 @@ function renderList() {
     btn.textContent = "Играть";
     btn.onclick = () => startGame(deck.id);
     card.appendChild(btn);
+    const actions = document.createElement("div");
+    actions.className = "card-actions";
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn ghost icon-btn edit-btn";
+    editBtn.textContent = "✎";
+    editBtn.title = "Редактировать";
+    editBtn.setAttribute("aria-label", `Редактировать «${deck.title}»`);
+    editBtn.onclick = () => startEdit(deck.id);
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn ghost icon-btn delete-btn";
+    delBtn.textContent = "🗑";
+    delBtn.title = "Удалить";
+    delBtn.setAttribute("aria-label", `Удалить «${deck.title}»`);
+    delBtn.onclick = () => deleteDeck(deck.id);
+    actions.appendChild(editBtn);
+    actions.appendChild(delBtn);
+    card.appendChild(actions);
     box.appendChild(card);
   });
+}
+
+function deleteDeck(deckId) {
+  const deck = state.decks.find((d) => d.id === deckId);
+  if (!deck) return;
+  if (!confirm(`Удалить игру «${deck.title}»?`)) return;
+  state.decks = state.decks.filter((d) => d.id !== deckId);
+  renderList();
+}
+
+function openNewEditor() {
+  state.editingId = null;
+  $("editor-title").textContent = "Новая игра";
+  $("editor-questions").innerHTML = "";
+  $("editor-questions").appendChild(editorQuestionBlock());
+  $("game-title").value = "";
+  $("editor-error").textContent = "";
+  showScreen("editor");
+}
+
+function startEdit(deckId) {
+  const deck = state.decks.find((d) => d.id === deckId);
+  if (!deck) return;
+  state.editingId = deckId;
+  $("editor-title").textContent = "Редактирование";
+  $("game-title").value = deck.title;
+  $("editor-error").textContent = "";
+  $("editor-questions").innerHTML = "";
+  deck.questions.forEach((q) => $("editor-questions").appendChild(editorQuestionBlock(q)));
+  showScreen("editor");
 }
 
 // ---------- Редактор ----------
@@ -221,11 +269,7 @@ function showResult() {
 document.querySelectorAll(".nav-btn").forEach((b) => {
   b.onclick = () => {
     if (b.dataset.nav === "editor") {
-      $("editor-questions").innerHTML = "";
-      $("editor-questions").appendChild(editorQuestionBlock());
-      $("game-title").value = "";
-      $("editor-error").textContent = "";
-      showScreen("editor");
+      openNewEditor();
     } else {
       showScreen("list");
     }
@@ -240,7 +284,17 @@ $("save-deck").onclick = () => {
     $("editor-error").textContent = error;
     return;
   }
-  state.decks.push(deck);
+  if (state.editingId) {
+    const idx = state.decks.findIndex((d) => d.id === state.editingId);
+    if (idx >= 0) {
+      state.decks[idx] = { ...deck, id: state.editingId };
+    } else {
+      state.decks.push(deck);
+    }
+    state.editingId = null;
+  } else {
+    state.decks.push(deck);
+  }
   renderList();
   showScreen("list");
 };

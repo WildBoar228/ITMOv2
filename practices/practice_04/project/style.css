@@ -72,6 +72,12 @@ body {
 
 .deck-card h3 { margin: 0; }
 
+.card-actions { display: flex; gap: 8px; }
+
+.icon-btn { padding: 8px 12px; font-size: 16px; line-height: 1; }
+
+.icon-btn.delete-btn:hover { border-color: var(--danger); }
+
 .btn {
   border: 0;
   border-radius: 10px;
