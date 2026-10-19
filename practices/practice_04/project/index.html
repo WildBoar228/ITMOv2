@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quiz-карточки — Kahoot на одного</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">🎯 Quiz-карточки</div>
+    <nav class="nav">
+      <button data-nav="list" class="nav-btn active">Игры</button>
+      <button data-nav="editor" class="nav-btn">+ Новая игра</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- Экран: список игр -->
+    <section id="screen-list" class="screen">
+      <h1>Выбери игру</h1>
+      <p class="muted">15 секунд на вопрос · 4 варианта · прогресс не сохраняется</p>
+      <div id="deck-list" class="deck-grid"></div>
+      <div class="import-row">
+        <label class="btn ghost" for="import-file">Импорт JSON</label>
+        <input id="import-file" type="file" accept="application/json" hidden />
+        <button id="export-all" class="btn ghost">Скачать все игры</button>
+      </div>
+    </section>
+
+    <!-- Экран: редактор -->
+    <section id="screen-editor" class="screen hidden">
+      <h1 id="editor-title">Новая игра</h1>
+      <label class="field">
+        <span>Название игры</span>
+        <input id="game-title" type="text" placeholder="Например: Английские слова" maxlength="80" />
+      </label>
+      <div id="editor-questions"></div>
+      <div class="row">
+        <button id="add-question" class="btn ghost">+ Вопрос</button>
+        <button id="save-deck" class="btn primary">Сохранить игру</button>
+      </div>
+      <p id="editor-error" class="error"></p>
+    </section>
+
+    <!-- Экран: игра -->
+    <section id="screen-play" class="screen hidden">
+      <div class="play-head">
+        <div>
+          <div id="play-title" class="play-title"></div>
+          <div id="play-progress" class="muted"></div>
+        </div>
+        <div id="play-score" class="score">0</div>
+      </div>
+      <div class="timer"><div id="timer-bar"></div></div>
+      <h2 id="play-question"></h2>
+      <div id="play-options" class="options"></div>
+      <div class="row between">
+        <div id="play-feedback" class="muted"></div>
+        <button id="play-next" class="btn primary hidden">Далее</button>
+      </div>
+      <div id="play-explain" class="explain"></div>
+    </section>
+
+    <!-- Экран: результат -->
+    <section id="screen-result" class="screen hidden">
+      <h1>Результат</h1>
+      <div id="result-score" class="big-score"></div>
+      <p id="result-detail" class="muted"></p>
+      <div class="row">
+        <button id="result-retry" class="btn primary">Пройти ещё раз</button>
+        <button id="result-home" class="btn ghost">К списку игр</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

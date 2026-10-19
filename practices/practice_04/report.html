@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Практика 4 — отчёт: Quiz-карточки</title>
+<style>
+  :root { --bg:#0f1226; --card:#1a1f3d; --accent:#7c5cff; --green:#00d4a4; --text:#eef0ff; --muted:#9aa1c7; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  .wrap { max-width:900px; margin:0 auto; padding:32px 18px 80px; }
+  h1 { font-size:30px; margin-bottom:4px; }
+  h2 { margin-top:44px; border-bottom:1px solid #2a2f55; padding-bottom:8px; }
+  .sub { color:var(--muted); }
+  .card { background:var(--card); border:1px solid #2c3260; border-radius:14px; padding:16px 18px; margin:12px 0; }
+  a { color:var(--accent); }
+  code, pre { background:#12163a; border-radius:8px; }
+  code { padding:2px 6px; }
+  pre { padding:12px 14px; overflow-x:auto; }
+  .ok { color:var(--green); font-weight:700; }
+  table { width:100%; border-collapse:collapse; margin-top:12px; }
+  th, td { border:1px solid #2c3260; padding:8px 10px; text-align:left; }
+  th { background:#12163a; }
+  .tag { display:inline-block; background:var(--accent); border-radius:999px; padding:2px 10px; font-size:13px; margin-right:6px; }
+  ol li, ul li { margin:6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Практика 4: две фичи с агентом — отчёт</h1>
+<p class="sub">Проект «Quiz-карточки» (Kahoot на одного): локальная страница, 15 с на вопрос, 4 варианта, без сохранения прогресса.<br>
+Запуск: <code>python3 -m http.server 8000</code> → <code>/project/</code> · Проверка: <code>bash tests/check.sh</code> → <span class="ok">20 passed, CHECK_OK</span></p>
+
+<h2>1. Настроенная среда <span class="tag">5 баллов</span></h2>
+<div class="card">
+<ol>
+  <li><b>AGENTS.md</b> — <a href="AGENTS.md">AGENTS.md</a>: структура, строгая схема <code>decks.json</code> (4 варианта, <code>correct</code> 0–3, опциональный <code>explain</code>), запреты (таймер 15 с, никакого <code>localStorage</code> для счёта), команды проверки. Агент читает его через <code>instructions</code> в <a href="opencode.json">opencode.json</a>.</li>
+  <li><b>Skill</b> — свой <a href=".opencode/skills/quiz-generator/SKILL.md">quiz-generator</a> (+ <a href=".opencode/skills/quiz-generator/template.md">template.md</a>) и готовый <a href=".opencode/skills/test-driven-development/SKILL.md">test-driven-development</a>. Обоснование: генератор закрывает самое долгое — набивание вопросов; TDD задаёт процесс «сначала красный тест».</li>
+  <li><b>MCP</b> — внешний <code>context7</code> (remote, корень репо) для свежих доков + свой <code>quiz</code> (local, <a href="mcp/quiz_server.py">mcp/quiz_server.py</a>). Обоснование: агент работает с колодами строгими вызовами, а не правит JSON руками.</li>
+  <li><b>Hook</b> — <a href=".opencode/plugins/quiz-check.js">.opencode/plugins/quiz-check.js</a> на <code>tool.execute.after</code> (только <code>edit</code>/<code>write</code> внутри <code>project/</code>), runner — <a href="tests/check.sh">tests/check.sh</a> (<code>json.tool</code> + <code>node --check</code> + <code>pytest -q</code>). Регистрация не нужна — файл подхватывается автоматически. Провал бросается исключением и виден агенту как ошибка тула.</li>
+</ol>
+</div>
+
+<h2>2. Skill <span class="tag">2 балла</span></h2>
+<div class="card">
+<p><b>Устройство:</b> инструкция + шаблон. Агент извлекает из учебного текста только проверяемые факты, собирает вопросы строго по шаблону и обязан прогнать самопроверку по тем же правилам, что <code>validateDeck()</code>, до выдачи. Ценность — игра импортируется в UI с первого раза.</p>
+<p><b>Запуск и результат:</b> демо — квиз из <code>practice_04/README.md</code> (валиден: <code>validateDeck → [True]</code>); боевое — игра «Реляционная алгебра (лекция 5)», 8 вопросов из внешнего конспекта <code>db_lec5.md</code>, добавлена в <a href="project/data/decks.json">project/data/decks.json</a>. Позиции <code>correct</code> выровнены вручную до <code>[0,1,2,3,1,0,2,3]</code>.</p>
+</div>
+
+<h2>3. Собственный MCP <span class="tag">2 балла</span></h2>
+<div class="card">
+<p><b>Полезный tool</b> (на деле 4, read-only): <code>list_decks</code>, <code>get_question</code> (без <code>correct</code> — не подсматривать), <code>check_answer</code> (возвращает <code>correct</code> + <code>explain</code>), <code>validate_deck</code> (проверка JSON от quiz-generator перед импортом). Тесты: <a href="mcp/test_quiz_server.py">mcp/test_quiz_server.py</a> — 10 шт., <span class="ok">10 passed</span>.</p>
+<p><b>Реальный вызов:</b> <code>opencode mcp list</code> → <span class="ok">✓ quiz connected</span> (stdio-транспорт доказан живым клиентом).</p>
+<pre>use quiz → list_decks → [{id: "demo-it", questionCount: 3}, ...]
+check_answer(demo-it, q1, 0) → {correct: true, explain: "HTML — язык разметки..."}</pre>
+<p><b>Ошибочный вход:</b> <code>check_answer(demo-it, q1, 9)</code> → <code>error: answer_idx must be 0–3</code>; <code>get_question(nope, 0)</code> → <code>error: unknown deck</code>. Все 4 ошибки покрыты тестами.</p>
+</div>
+
+<h2>4. Фичи A и B</h2>
+<div class="card">
+<ul>
+  <li><b>A — пояснения к ответам</b> (цикл TDD: RED <code>2 failed</code> → GREEN <code>6 passed</code>): поле <code>explain?</code> в схеме, редактор, показ после ответа. По пути пойман и за skewness-пример: hook отвечал <code>CHECK_FAIL</code> после каждой правки до победного.</li>
+  <li><b>B — правка / удаление игр</b>: кнопки ✎/🗑 на карточках, режим <code>editingId</code>, удаление через <code>confirm()</code>, всё в памяти. Тесты: <a href="tests/test_feature_b.py">tests/test_feature_b.py</a> (4 шт.).</li>
+</ul>
+</div>
+
+<h2>5. Рефлексия (кратко)</h2>
+<div class="card">
+<p>Проект придумали и написали вместе с агентом, но пришлось найти самому несколько багов. Очень эффективной была связка скилла для TDD + hook на тесты. Подробно — в <a href="reflection.md">reflection.md</a>.</p>
+</div>
+
+</div>
+</body>
+</html>
