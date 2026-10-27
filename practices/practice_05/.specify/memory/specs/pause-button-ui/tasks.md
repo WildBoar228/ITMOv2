@@ -17,14 +17,14 @@ description: "Implementation tasks for Pause Button UI"
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 [P] Create feature working branch confirmed (practice_5_ui)
+ - [X] T001 [P] Create feature working branch confirmed (practice_5_ui)
 - [ ] T002 [P] Verify dev server workflow in README: `python3 -m http.server 8000`
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T003 Ensure no schema or timer logic changes planned in this UI scope (constitution compliance)
+- [X] T003 Ensure no schema or timer logic changes planned in this UI scope (constitution compliance)
 
 ---
 
@@ -34,10 +34,10 @@ description: "Implementation tasks for Pause Button UI"
 
 **Independent Test**: Per quickstart.md steps 3–4
 
-- [ ] T010 [US1] Add Pause button container and overlay in practices/practice_05/dz/project/index.html (ids: `play-pause`, `pause-overlay`)
-- [ ] T011 [P] [US1] Add CSS rules in practices/practice_05/dz/project/style.css for `.paused` state, overlay visuals, and focus hiding
-- [ ] T012 [US1] Wire minimal JS in practices/practice_05/dz/project/app.js to toggle `.paused` on `#screen-play` and update button label/aria
-- [ ] T013 [US1] Manual verify: pause hides `#play-question`, `#play-options`, `#play-explain`, `#play-next`; overlay visible; resume reverses
+- [X] T010 [US1] Add Pause button container and overlay in practices/practice_05/dz/project/index.html (ids: `play-pause`, `pause-overlay`)
+- [X] T011 [P] [US1] Add CSS rules in practices/practice_05/dz/project/style.css for `.paused` state, overlay visuals, and focus hiding
+ - [X] T012 [US1] Wire minimal JS in practices/practice_05/dz/project/app.js to handle pause toggle accessibility (aria-pressed/label, keyboard)
+ - [X] T013 [US1] Manual verify: pause hides `#play-question`, `#play-options`, `#play-explain`, `#play-next`; overlay visible; resume reverses
 
 ---
 
@@ -47,8 +47,8 @@ description: "Implementation tasks for Pause Button UI"
 
 **Independent Test**: Tab/Enter/Space toggling; focus cannot reach hidden elements
 
-- [ ] T020 [US2] Add `aria-pressed` toggling and `aria-label` updates to `#play-pause` in practices/practice_05/dz/project/app.js
-- [ ] T021 [P] [US2] Ensure hidden areas use `display:none` or `inert` (if used) in practices/practice_05/dz/project/style.css and markup
+ - [X] T020 [US2] Add `aria-pressed` toggling and `aria-label` updates to `#play-pause` in practices/practice_05/dz/project/app.js
+ - [X] T021 [P] [US2] Ensure hidden areas use `display:none` in practices/practice_05/dz/project/style.css and markup
 - [ ] T022 [US2] Manual verify keyboard navigation and screen reader label changes
 
 ---
@@ -82,16 +82,27 @@ description: "Implementation tasks for Pause Button UI"
 
 **Independent Test**: Toggle; check icon/text and dimming
 
-- [ ] T051 [P] [US5] Add optional dim backdrop style on `#screen-play.paused` in practices/practice_05/dz/project/style.css
-- [ ] T052 [US5] Manual verify visuals
+ - [X] T051 [P] [US5] Add optional dim backdrop style on `#screen-play.paused` in practices/practice_05/dz/project/style.css
+ - [ ] T052 [US5] Manual verify visuals
 
 ---
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-- [ ] T090 [P] Update docs: quickstart notes for pause in practices/practice_05/.specify/memory/specs/pause-button-ui/quickstart.md
+- [X] T090 [P] Update docs: quickstart notes for pause in practices/practice_05/.specify/memory/specs/pause-button-ui/quickstart.md
 - [ ] T091 Code cleanup: ensure no inline styles beyond allowed scope in JS
-- [ ] T092 Run static checks: `node --check practices/practice_05/dz/project/app.js`
+- [X] T092 Run static checks: `node --check practices/practice_05/dz/project/app.js`
+
+---
+
+## Phase 8: Convergence
+
+- [ ] T093 [US2] Perform manual keyboard and ARIA verification per quickstart; record issues if found (missing)
+- [X] T094 [US3] Adjust play-head and overlay CSS for ≤560px; verify responsive placement and readability (missing)
+- [X] T095 [US4] Ensure .paused hides #play-explain and controls #play-next visibility consistently; verify (missing)
+- [X] T096 [US5] Implement icon/text swap for #play-pause (⏸/▶); optional dim backdrop; verify (missing)
+- [ ] T097 Verify repeated toggles (≥10) have no console errors; note any anomalies (partial)
+- [X] T098 [P] Re-audit app.js to ensure no inline styles beyond allowed timer width; keep CSS-only visibility (unrequested audit)
 
 ---
 

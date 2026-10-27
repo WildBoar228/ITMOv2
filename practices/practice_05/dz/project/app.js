@@ -202,6 +202,9 @@ function renderQuestion() {
   });
 
   updateTimerBar();
+  // Сбросить UI-паузу при рендере вопроса
+  const pauseToggle = document.getElementById("pause-toggle");
+  if (pauseToggle) pauseToggle.checked = false;
   cur.timerId = setInterval(() => {
     cur.timeLeft -= 0.2;
     if (cur.timeLeft <= 0) {
@@ -335,3 +338,26 @@ $("import-file").onchange = (e) => {
 };
 
 loadDecks();
+
+// UI-only: настройка кнопки паузы (aria, клавиатура)
+(function setupPauseUI() {
+  const toggle = document.getElementById("pause-toggle");
+  const btn = document.getElementById("play-pause");
+  if (!toggle || !btn) return;
+  btn.setAttribute("role", "button");
+  btn.tabIndex = 0;
+  const sync = () => {
+    const paused = !!toggle.checked;
+    btn.setAttribute("aria-pressed", paused ? "true" : "false");
+    btn.setAttribute("aria-label", paused ? "Продолжить" : "Пауза");
+  };
+  toggle.addEventListener("change", sync);
+  btn.addEventListener("keydown", (e) => {
+    if (e.key === " " || e.key === "Enter") {
+      e.preventDefault();
+      toggle.checked = !toggle.checked;
+      toggle.dispatchEvent(new Event("change"));
+    }
+  });
+  sync();
+})();

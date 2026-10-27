@@ -136,6 +136,36 @@ body {
 .play-title { font-weight: 800; font-size: 18px; }
 .score { font-size: 22px; font-weight: 800; background: #12163a; padding: 6px 14px; border-radius: 999px; }
 
+/* Pause control layout */
+.play-controls { display: flex; gap: 8px; align-items: center; }
+
+/* Pause overlay */
+#screen-play { position: relative; }
+#pause-overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(10, 12, 30, 0.7);
+  backdrop-filter: blur(2px);
+}
+#pause-overlay .po-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+
+/* Toggle label text swap */
+#play-pause .pp-label-paused { display: none; }
+/* When paused (checkbox checked), show paused label and overlay; hide body */
+#pause-toggle:checked ~ .play-head #play-pause .pp-label-run { display: none; }
+#pause-toggle:checked ~ .play-head #play-pause .pp-label-paused { display: inline; }
+#pause-toggle:checked ~ #pause-overlay { display: flex; }
+#pause-toggle:checked ~ #play-body { display: none; }
+
+@media (max-width: 560px) {
+  #pause-overlay .po-title { font-size: 22px; }
+  #play-pause { padding: 8px 12px; }
+}
+
 .timer { height: 10px; background: #222750; border-radius: 999px; overflow: hidden; margin: 14px 0; }
 #timer-bar { height: 100%; width: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width 0.2s linear; }
 
