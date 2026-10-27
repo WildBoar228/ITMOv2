@@ -8,6 +8,7 @@ const state = {
 };
 
 const $ = (id) => document.getElementById(id);
+let currentScreen = "list"; // текущий активный экран
 
 function showScreen(name) {
   for (const s of ["list", "editor", "play", "result"]) {
@@ -16,6 +17,13 @@ function showScreen(name) {
   document.querySelectorAll(".nav-btn").forEach((b) => {
     b.classList.toggle("active", b.dataset.nav === name || (name === "play" && b.dataset.nav === "list") || (name === "result" && b.dataset.nav === "list"));
   });
+  // обновить текущий экран
+  currentScreen = name;
+  // при уходе с экрана игры сбрасываем паузу и гарантируем остановку таймера
+  if (name !== "play" && state.current) {
+    state.current.paused = false;
+    clearInterval(state.current.timerId);
+  }
 }
 
 // ---------- Загрузка ----------
@@ -182,6 +190,8 @@ function renderQuestion() {
   const q = cur.deck.questions[cur.index];
   clearInterval(cur.timerId);
   cur.locked = false;
+  // сброс признака паузы при показе нового вопроса
+  cur.paused = false;
   cur.timeLeft = TIME_PER_QUESTION;
 
   $("play-progress").textContent = `Вопрос ${cur.index + 1} из ${cur.deck.questions.length}`;
@@ -202,9 +212,6 @@ function renderQuestion() {
   });
 
   updateTimerBar();
-  // Сбросить UI-паузу при рендере вопроса
-  const pauseToggle = document.getElementById("pause-toggle");
-  if (pauseToggle) pauseToggle.checked = false;
   cur.timerId = setInterval(() => {
     cur.timeLeft -= 0.2;
     if (cur.timeLeft <= 0) {
@@ -224,6 +231,8 @@ function updateTimerBar() {
 
 function answer(idx) {
   const cur = state.current;
+  // Во время паузы ответы игнорируются
+  if (cur && cur.paused) return;
   if (cur.locked) return;
   cur.locked = true;
   clearInterval(cur.timerId);
@@ -253,6 +262,8 @@ function answer(idx) {
   next.textContent = last ? "К результату" : "Далее";
   next.classList.remove("hidden");
   next.onclick = () => {
+    // Во время паузы переход запрещён
+    if (state.current && state.current.paused) return;
     if (last) showResult();
     else {
       cur.index += 1;
@@ -339,6 +350,37 @@ $("import-file").onchange = (e) => {
 
 loadDecks();
 
+// ---------- Пауза (логика) ----------
+function pauseGame() {
+  const cur = state.current;
+  if (!cur) return; // вне игры — игнорируем
+  if (cur.paused) return; // идемпотентно
+  clearInterval(state.current.timerId);
+  state.current.paused = true;
+}
+
+function resumeGame() {
+  const cur = state.current;
+  if (!cur) return; // вне игры — игнорируем
+  if (!cur.paused) return; // уже работает
+  cur.paused = false;
+  clearInterval(cur.timerId);
+  cur.timerId = setInterval(() => {
+    cur.timeLeft -= 0.2;
+    if (cur.timeLeft <= 0) {
+      cur.timeLeft = 0;
+      updateTimerBar();
+      answer(-1); // таймаут
+      return;
+    }
+    updateTimerBar();
+  }, 200);
+}
+
+function isPaused() {
+  return !!(state.current && state.current.paused);
+}
+
 // UI-only: настройка кнопки паузы (aria, клавиатура)
 (function setupPauseUI() {
   const toggle = document.getElementById("pause-toggle");
@@ -351,7 +393,12 @@ loadDecks();
     btn.setAttribute("aria-pressed", paused ? "true" : "false");
     btn.setAttribute("aria-label", paused ? "Продолжить" : "Пауза");
   };
-  toggle.addEventListener("change", sync);
+  toggle.addEventListener("change", () => {
+    const paused = !!toggle.checked;
+    if (paused) pauseGame();
+    else resumeGame();
+    sync();
+  });
   btn.addEventListener("keydown", (e) => {
     if (e.key === " " || e.key === "Enter") {
       e.preventDefault();

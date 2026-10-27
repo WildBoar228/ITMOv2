@@ -17,15 +17,15 @@ description: "Implementation tasks for Pause Logic (Play Screen)"
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Confirm working branch `001-game-pause-logic` is active (informational)
-- [ ] T002 Verify local dev server works: `python3 -m http.server 8000` (open /project/)
+ - [x] T001 Confirm working branch `001-game-pause-logic` is active (informational)
+ - [x] T002 Verify local dev server works: `python3 -m http.server 8000` (open /project/)
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T003 Ensure no schema or TIME_PER_QUESTION changes are planned (constitution compliance)
-- [ ] T004 Identify insertion points in practices/practice_05/dz/project/app.js for pause/resume (renderQuestion, answer, navigation)
+- [x] T003 Ensure no schema or TIME_PER_QUESTION changes are planned (constitution compliance)
+- [x] T004 Identify insertion points in practices/practice_05/dz/project/app.js for pause/resume (renderQuestion, answer, navigation)
 
 ---
 
@@ -35,12 +35,12 @@ description: "Implementation tasks for Pause Logic (Play Screen)"
 
 **Independent Test**: Start a question, pause, wait ≥5s, resume; timeLeft unchanged; inputs ignored while paused.
 
-- [ ] T010 [US1] Add `paused` boolean to runtime state in practices/practice_05/dz/project/app.js (within `state.current` during Play)
-- [ ] T011 [US1] Implement `pauseGame()` to: clear interval, set `paused=true`, preserve `timeLeft` in practices/practice_05/dz/project/app.js
-- [ ] T012 [US1] Implement `resumeGame()` to: restart interval at 200ms using preserved `timeLeft`, set `paused=false` in practices/practice_05/dz/project/app.js
-- [ ] T013 [US1] Gate `answer(idx)` early-return if `state.current.paused === true` in practices/practice_05/dz/project/app.js
-- [ ] T014 [US1] Gate Next navigation while paused: ignore clicks or no-op until resume in practices/practice_05/dz/project/app.js
-- [ ] T015 [P] [US1] Expose read-only paused getter for UI toggle sync (e.g., function `isPaused()`) in practices/practice_05/dz/project/app.js
+- [x] T010 [US1] Add `paused` boolean to runtime state in practices/practice_05/dz/project/app.js (within `state.current` during Play)
+- [x] T011 [US1] Implement `pauseGame()` to: clear interval, set `paused=true`, preserve `timeLeft` in practices/practice_05/dz/project/app.js
+- [x] T012 [US1] Implement `resumeGame()` to: restart interval at 200ms using preserved `timeLeft`, set `paused=false` in practices/practice_05/dz/project/app.js
+- [x] T013 [US1] Gate `answer(idx)` early-return if `state.current.paused === true` in practices/practice_05/dz/project/app.js
+- [x] T014 [US1] Gate Next navigation while paused: ignore clicks or no-op until resume in practices/practice_05/dz/project/app.js
+- [x] T015 [P] [US1] Expose read-only paused getter for UI toggle sync (e.g., function `isPaused()`) in practices/practice_05/dz/project/app.js
 
 ---
 
@@ -50,9 +50,9 @@ description: "Implementation tasks for Pause Logic (Play Screen)"
 
 **Independent Test**: Pause before answering then resume and answer; pause after answering then resume and go Next; state consistent.
 
-- [ ] T020 [US2] Ensure `pauseGame()` does not modify `locked` or score in practices/practice_05/dz/project/app.js
-- [ ] T021 [US2] Ensure `resumeGame()` does not re-render current question or reset options; timer only in practices/practice_05/dz/project/app.js
-- [ ] T022 [US2] Verify that post-answer state (feedback, Next visibility) persists across pause/resume by not touching related flags in practices/practice_05/dz/project/app.js
+- [x] T020 [US2] Ensure `pauseGame()` does not modify `locked` or score in practices/practice_05/dz/project/app.js
+- [x] T021 [US2] Ensure `resumeGame()` does not re-render current question or reset options; timer only in practices/practice_05/dz/project/app.js
+- [x] T022 [US2] Verify that post-answer state (feedback, Next visibility) persists across pause/resume by not touching related flags in practices/practice_05/dz/project/app.js
 
 ---
 
@@ -62,8 +62,8 @@ description: "Implementation tasks for Pause Logic (Play Screen)"
 
 **Independent Test**: Try pause on List/Editor/Result; no effect.
 
-- [ ] T030 [US3] Guard `pauseGame()` and `resumeGame()` to no-op when `!state.current` or when non-Play screens are active in practices/practice_05/dz/project/app.js
-- [ ] T031 [P] [US3] Clear paused=false when leaving Play (showScreen transitions to other screens) in practices/practice_05/dz/project/app.js
+- [x] T030 [US3] Guard `pauseGame()` and `resumeGame()` to no-op when `!state.current` or when non-Play screens are active in practices/practice_05/dz/project/app.js
+- [x] T031 [P] [US3] Clear paused=false when leaving Play (showScreen transitions to other screens) in practices/practice_05/dz/project/app.js
 
 ---
 
@@ -73,8 +73,8 @@ description: "Implementation tasks for Pause Logic (Play Screen)"
 
 **Independent Test**: Toggle 10x quickly; only one interval exists; final state matches last toggle.
 
-- [ ] T040 [US4] Make `pauseGame()` idempotent: if already paused, return early in practices/practice_05/dz/project/app.js
-- [ ] T041 [US4] Make `resumeGame()` idempotent: if not paused, return early; ensure existing interval cleared before starting new one in practices/practice_05/dz/project/app.js
+- [x] T040 [US4] Make `pauseGame()` idempotent: if already paused, return early in practices/practice_05/dz/project/app.js
+- [x] T041 [US4] Make `resumeGame()` idempotent: if not paused, return early; ensure existing interval cleared before starting new one in practices/practice_05/dz/project/app.js
 
 ---
 
@@ -84,17 +84,17 @@ description: "Implementation tasks for Pause Logic (Play Screen)"
 
 **Independent Test**: Programmatic calls ignored while paused; paused flag readable.
 
-- [ ] T050 [US5] Provide exported functions `pauseGame`, `resumeGame`, `isPaused` for UI wiring in practices/practice_05/dz/project/app.js
-- [ ] T051 [P] Manual validation following specs/001-game-pause-logic/quickstart.md
+- [x] T050 [US5] Provide exported functions `pauseGame`, `resumeGame`, `isPaused` for UI wiring in practices/practice_05/dz/project/app.js
+- [x] T051 [P] Manual validation following specs/001-game-pause-logic/quickstart.md
 
 ---
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-- [ ] T090 Update docs if public names differ: specs/001-game-pause-logic/contracts/ui.md
-- [ ] T091 Code cleanup: ensure no inline styles added beyond timer width updates in practices/practice_05/dz/project/app.js
-- [ ] T092 Run static checks: `node --check practices/practice_05/dz/project/app.js`
-- [ ] T093 [P] Sanity manual pass on edge cases (timeout collision, long pause)
+- [x] T090 Update docs if public names differ: specs/001-game-pause-logic/contracts/ui.md
+- [x] T091 Code cleanup: ensure no inline styles added beyond timer width updates in practices/practice_05/dz/project/app.js
+- [x] T092 Run static checks: `node --check practices/practice_05/dz/project/app.js`
+- [x] T093 [P] Sanity manual pass on edge cases (timeout collision, long pause)
 
 ---
 
