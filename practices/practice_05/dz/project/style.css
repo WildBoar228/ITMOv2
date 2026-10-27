@@ -141,6 +141,7 @@ body {
 
 /* Pause overlay */
 #screen-play { position: relative; }
+#play-body { position: relative; }
 #pause-overlay {
   position: absolute;
   inset: 0;
@@ -148,10 +149,12 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
+  padding: 20px;
   background: rgba(10, 12, 30, 0.7);
   backdrop-filter: blur(2px);
 }
-#pause-overlay .po-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+#pause-overlay .po-title { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+#pause-overlay .po-hint { display: block; margin-top: 4px; }
 
 /* Toggle label text swap */
 #play-pause .pp-label-paused { display: none; }
@@ -159,7 +162,7 @@ body {
 #pause-toggle:checked ~ .play-head #play-pause .pp-label-run { display: none; }
 #pause-toggle:checked ~ .play-head #play-pause .pp-label-paused { display: inline; }
 #pause-toggle:checked ~ #pause-overlay { display: flex; }
-#pause-toggle:checked ~ #play-body { display: none; }
+#pause-toggle:checked ~ #play-body .play-content { display: none; }
 
 @media (max-width: 560px) {
   #pause-overlay .po-title { font-size: 22px; }

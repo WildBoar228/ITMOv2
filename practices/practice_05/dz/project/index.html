@@ -60,21 +60,24 @@
           <div id="play-score" class="score">0</div>
         </div>
       </div>
-      <!-- Оверлей паузы -->
-      <div id="pause-overlay" aria-hidden="true">
-        <div class="po-title">На паузе</div>
-        <div class="po-hint muted">Нажмите «Продолжить», чтобы вернуться</div>
-      </div>
-      <!-- Игровое содержимое, скрывается при паузе -->
+      <!-- Игровое содержимое с оверлеем паузы -->
       <div id="play-body">
-        <div class="timer"><div id="timer-bar"></div></div>
-        <h2 id="play-question"></h2>
-        <div id="play-options" class="options"></div>
-        <div class="row between">
-          <div id="play-feedback" class="muted"></div>
-          <button id="play-next" class="btn primary hidden">Далее</button>
+        <!-- Оверлей паузы: покрывает только тело игры, не заголовок -->
+        <div id="pause-overlay" aria-hidden="true">
+          <div class="po-title">На паузе</div>
+          <div class="po-hint muted">Нажмите «Продолжить», чтобы вернуться</div>
         </div>
-        <div id="play-explain" class="explain"></div>
+
+        <div class="play-content">
+          <div class="timer"><div id="timer-bar"></div></div>
+          <h2 id="play-question"></h2>
+          <div id="play-options" class="options"></div>
+          <div class="row between">
+            <div id="play-feedback" class="muted"></div>
+            <button id="play-next" class="btn primary hidden">Далее</button>
+          </div>
+          <div id="play-explain" class="explain"></div>
+        </div>
       </div>
     </section>
 
