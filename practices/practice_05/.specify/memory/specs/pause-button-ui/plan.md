@@ -12,12 +12,6 @@ Add a Pause control to the Play screen that toggles a paused UI state: hides que
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
 **Language/Version**: HTML/CSS/JavaScript (vanilla); Node for JS syntax check
 
 **Primary Dependencies**: None (no build system)
@@ -61,12 +55,6 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 
 ```text
 # [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
