@@ -1,0 +1,1 @@
+# UI Contract: Pause Toggle
