@@ -161,12 +161,14 @@ body {
 /* When paused (checkbox checked), show paused label and overlay; hide body */
 #pause-toggle:checked ~ .play-head #play-pause .pp-label-run { display: none; }
 #pause-toggle:checked ~ .play-head #play-pause .pp-label-paused { display: inline; }
-#pause-toggle:checked ~ #pause-overlay { display: flex; }
+#pause-toggle:checked ~ #play-body #pause-overlay { display: flex; }
 #pause-toggle:checked ~ #play-body .play-content { display: none; }
 
 @media (max-width: 560px) {
   #pause-overlay .po-title { font-size: 22px; }
   #play-pause { padding: 8px 12px; }
+  .play-head { flex-direction: column; align-items: stretch; gap: 8px; }
+  .play-controls { justify-content: space-between; }
 }
 
 .timer { height: 10px; background: #222750; border-radius: 999px; overflow: hidden; margin: 14px 0; }
