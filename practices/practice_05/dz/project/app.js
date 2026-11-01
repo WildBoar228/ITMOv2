@@ -193,6 +193,9 @@ function renderQuestion() {
   // сброс признака паузы при показе нового вопроса
   cur.paused = false;
   cur.timeLeft = TIME_PER_QUESTION;
+  // Снять чекбокс паузы, если он включён (скрыть оверлей)
+  const pt = document.getElementById("pause-toggle");
+  if (pt) pt.checked = false;
 
   $("play-progress").textContent = `Вопрос ${cur.index + 1} из ${cur.deck.questions.length}`;
   $("play-score").textContent = cur.score;
@@ -365,6 +368,10 @@ function resumeGame() {
   if (!cur.paused) return; // уже работает
   cur.paused = false;
   clearInterval(cur.timerId);
+  // Если ответ уже дан (locked), таймер не возобновляем — пользователь читает объяснение
+  if (cur.locked) {
+    return;
+  }
   cur.timerId = setInterval(() => {
     cur.timeLeft -= 0.2;
     if (cur.timeLeft <= 0) {
