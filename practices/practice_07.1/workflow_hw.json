@@ -1,0 +1,976 @@
+{
+  "name": "My workflow 44",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/{{ $json.repository }}/pulls/{{ $json.pr_number }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3.diff"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e46de0b4-fa7b-477c-ab85-3c92ab46a2f9",
+      "name": "Get file's PR info",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        960,
+        0
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "v29XBAFVRUvYZadM",
+          "name": "Bearer Auth account 27"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "openai/gpt-5.5",
+          "mode": "list",
+          "cachedResultName": "openai/gpt-5.5"
+        },
+        "options": {}
+      },
+      "id": "9f401dc5-6f5a-4c23-aeec-0e801dd11b62",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        1200,
+        208
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "Hd2jtKvncJYuNr33",
+          "name": "OpenAI account 31"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "owner": {
+          "__rl": true,
+          "value": "WildBoar228",
+          "mode": "list",
+          "cachedResultName": "WildBoar228",
+          "cachedResultUrl": "https://github.com/WildBoar228"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/ai-course-avito/ITMOv2"
+        },
+        "events": [
+          "pull_request"
+        ],
+        "options": {}
+      },
+      "id": "b7dbf6b3-0785-4220-b679-0144c78d2469",
+      "name": "PR Trigger1",
+      "type": "n8n-nodes-base.githubTrigger",
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "c6a30e53-bda5-4922-87f3-8cdfb399a35f",
+      "notesInFlow": false,
+      "typeVersion": 1,
+      "credentials": {
+        "githubApi": {
+          "id": "600j3DTJzCH4ORkz",
+          "name": "GitHub account 42"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "review",
+        "owner": {
+          "__rl": true,
+          "value": "WildBoar228",
+          "mode": "list",
+          "cachedResultName": "WildBoar228",
+          "cachedResultUrl": "https://github.com/WildBoar228"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/WildBoar228/ITMOv2"
+        },
+        "pullRequestNumber": "={{ $('Prepare Main PR').first().json.pr_number }}",
+        "event": "comment",
+        "body": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "b536cc34-bf52-4e21-be81-45a142d0641d",
+      "name": "GitHub Robot1",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        1600,
+        0
+      ],
+      "webhookId": "4392c85d-31e9-4ebd-8f4d-d556cbb8f3e0",
+      "typeVersion": 1.1,
+      "credentials": {
+        "githubApi": {
+          "id": "600j3DTJzCH4ORkz",
+          "name": "GitHub account 42"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "WildBoar228",
+          "mode": "list",
+          "cachedResultName": "WildBoar228",
+          "cachedResultUrl": "https://github.com/WildBoar228"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/WildBoar228/ITMOv2"
+        },
+        "issueNumber": "={{ $('Prepare Main PR').first().json.pr_number }}",
+        "editFields": {
+          "labels": [
+            {
+              "label": "ReviewedByAI"
+            }
+          ]
+        }
+      },
+      "id": "9108fd83-c60d-4d34-9825-f13fb243c60e",
+      "name": "Add Label to PR1",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        2048,
+        0
+      ],
+      "webhookId": "70d2db56-965b-4f1f-817c-1fbb311320c0",
+      "typeVersion": 1,
+      "credentials": {
+        "githubApi": {
+          "id": "600j3DTJzCH4ORkz",
+          "name": "GitHub account 42"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior Python developer.\n\nСделай code review ТОЛЬКО изменённых строк в diff.\nНайди:\n\t•\tбаги\n\t•\tпроблемы безопасности\n\t•\tрегрессии\n\t•\tпроблемы производительности\n\t•\tнарушения best practices\n\nДай конкретные рекомендации и примеры исправлений.\n\n{{ $json.data }}",
+        "options": {
+          "systemMessage": ""
+        }
+      },
+      "id": "f07e4337-3d79-4a26-a673-d16eca542817",
+      "name": "Code Review Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1232,
+        0
+      ],
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "owner": {
+          "__rl": true,
+          "value": "WildBoar228",
+          "mode": "list",
+          "cachedResultName": "WildBoar228",
+          "cachedResultUrl": "https://github.com/WildBoar228"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/ai-course-avito/ITMOv2"
+        },
+        "events": [
+          "issue_comment"
+        ],
+        "options": {}
+      },
+      "id": "17993e3c-eb88-4e87-8780-d91ec0da96b8",
+      "name": "PR Comment Trigger",
+      "type": "n8n-nodes-base.githubTrigger",
+      "position": [
+        32,
+        400
+      ],
+      "webhookId": "c6a30e53-bda5-4922-87f3-8cdfb399a35f",
+      "notesInFlow": false,
+      "typeVersion": 1,
+      "credentials": {
+        "githubApi": {
+          "id": "600j3DTJzCH4ORkz",
+          "name": "GitHub account 42"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "10c4d5b7-d406-4fd4-b0f1-e5c66c07b44b",
+              "leftValue": "={{\n  $json.body.action === 'created'\n  && !!$json.body.issue?.pull_request\n  && ($json.body.comment?.body ?? '').trim() === '/make_other_ai_review'\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        272,
+        496
+      ],
+      "id": "be08eaa5-0568-4a8f-bc6e-f8af67f3c503",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "deepseek/deepseek-v4.1-flash-1017",
+          "mode": "list",
+          "cachedResultName": "deepseek/deepseek-v4.1-flash-1017"
+        },
+        "options": {}
+      },
+      "id": "fe74adbd-e4b7-4592-bd00-5f2513dc3214",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        1040,
+        640
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "Hd2jtKvncJYuNr33",
+          "name": "OpenAI account 31"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "review",
+        "owner": {
+          "__rl": true,
+          "value": "WildBoar228",
+          "mode": "list",
+          "cachedResultName": "WildBoar228",
+          "cachedResultUrl": "https://github.com/WildBoar228"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/WildBoar228/ITMOv2"
+        },
+        "pullRequestNumber": "={{ $('PR Comment Trigger').first().json.body.issue.number }}",
+        "event": "comment",
+        "body": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "a8f5e034-71fd-480f-8ab4-c248205553b9",
+      "name": "GitHub Robot",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        1440,
+        432
+      ],
+      "webhookId": "4392c85d-31e9-4ebd-8f4d-d556cbb8f3e0",
+      "typeVersion": 1.1,
+      "credentials": {
+        "githubApi": {
+          "id": "600j3DTJzCH4ORkz",
+          "name": "GitHub account 42"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "edit",
+        "owner": {
+          "__rl": true,
+          "value": "WildBoar228",
+          "mode": "list",
+          "cachedResultName": "WildBoar228",
+          "cachedResultUrl": "https://github.com/WildBoar228"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/WildBoar228/ITMOv2"
+        },
+        "issueNumber": "={{ $('PR Comment Trigger').first().json.body.issue.number }}",
+        "editFields": {
+          "labels": [
+            {
+              "label": "ReviewedByAI"
+            }
+          ]
+        }
+      },
+      "id": "8c0f5cc4-a4be-464a-98e3-4e5e7df753a5",
+      "name": "Add Label to PR",
+      "type": "n8n-nodes-base.github",
+      "position": [
+        1888,
+        432
+      ],
+      "webhookId": "70d2db56-965b-4f1f-817c-1fbb311320c0",
+      "typeVersion": 1,
+      "credentials": {
+        "githubApi": {
+          "id": "600j3DTJzCH4ORkz",
+          "name": "GitHub account 42"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior Python developer.\n\nСделай code review ТОЛЬКО изменённых строк в diff.\nНайди:\n\t•\tбаги\n\t•\tпроблемы безопасности\n\t•\tрегрессии\n\t•\tпроблемы производительности\n\t•\tнарушения best practices\n\nДай конкретные рекомендации и примеры исправлений.\n\n{{ $json.data }}",
+        "options": {
+          "systemMessage": ""
+        }
+      },
+      "id": "769c010d-9db1-4870-83a4-23c6dfd69bf9",
+      "name": "Code Review Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1072,
+        432
+      ],
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/{{ $json.body.repository.full_name }}/pulls/{{ $json.body.issue.number }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3.diff"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "91232c52-be77-4d13-8044-5998bd719d25",
+      "name": "Get file's Other PR info",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        768,
+        400
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "v29XBAFVRUvYZadM",
+          "name": "Bearer Auth account 27"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ai_reviewed_prs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "pr_id": "={{ $('Prepare Main PR').first().json.pr_id }}",
+            "repository": "={{ $('Prepare Main PR').first().json.repository }}",
+            "pr_number": "={{ $('Prepare Main PR').first().json.pr_number }}",
+            "model": "openai/gpt-5.5",
+            "review_url": "={{ $json.html_url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "pr_id",
+              "displayName": "pr_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "repository",
+              "displayName": "repository",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pr_number",
+              "displayName": "pr_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "model",
+              "displayName": "model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_url",
+              "displayName": "review_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "539b99cb-880d-465d-96d7-88af462e4a01",
+      "name": "Store Main AI Review",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        0
+      ],
+      "notesInFlow": true,
+      "notes": "Создайте Data Table ai_reviewed_prs в том же проекте n8n. Колонки: pr_id (String), repository (String), pr_number (Number), model (String), review_url (String). pr_id = owner/repository#number. Запись создаётся после публикации review. Инструкция: DATA_TABLE_SETUP.md."
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ai_reviewed_prs",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "pr_id": "={{ $('PR Comment Trigger').first().json.body.repository.full_name + '#' + $('PR Comment Trigger').first().json.body.issue.number }}",
+            "repository": "={{ $('PR Comment Trigger').first().json.body.repository.full_name }}",
+            "pr_number": "={{ $('PR Comment Trigger').first().json.body.issue.number }}",
+            "model": "deepseek/deepseek-v4.1-flash-1017",
+            "review_url": "={{ $json.html_url }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "pr_id",
+              "displayName": "pr_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "repository",
+              "displayName": "repository",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pr_number",
+              "displayName": "pr_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "model",
+              "displayName": "model",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "review_url",
+              "displayName": "review_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3eb2792e-6a3c-476d-bfb1-175b4752c70d",
+      "name": "Store Other AI Review",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1664,
+        432
+      ],
+      "notesInFlow": true,
+      "notes": "Использует ту же таблицу ai_reviewed_prs, что и Store Main AI Review. Сохраняет ключ PR, репозиторий, номер, вторую модель и ссылку после успешной публикации review. Инструкция: DATA_TABLE_SETUP.md."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "37dd3a4c-20ad-4de9-9165-39653ea8155a",
+              "leftValue": "={{ $json.body.action === 'opened' && !!$json.body.pull_request }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6dc952a2-399c-4b04-9af3-8b55c2656825",
+      "name": "Is PR Opened",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "b3444bae-be42-4c9e-af15-09ae2ffab7dc",
+              "leftValue": "={{\n  $json.body.action === 'created'\n  && !!$json.body.issue?.pull_request\n  && ($json.body.comment?.body ?? '').trim() === '/make_ai_review'\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2449d95a-1db2-4b4d-bb6b-0d5387e45e55",
+      "name": "Is Main Review Command",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        272,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1d3d20b-2b87-4f41-92e1-cce963ed2888",
+              "name": "pr_id",
+              "value": "={{ $json.body.repository.full_name + '#' + ($json.body.issue?.number ?? $json.body.number) }}",
+              "type": "string"
+            },
+            {
+              "id": "55e3b09f-ddb5-427c-a14c-332842329c8a",
+              "name": "repository",
+              "value": "={{ $json.body.repository.full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "c429b21a-0417-4efa-9b59-d27ccfbfc010",
+              "name": "pr_number",
+              "value": "={{ $json.body.issue?.number ?? $json.body.number }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "6e9986dd-f1a8-44dc-95fe-8488b85f7414",
+      "name": "Prepare Main PR",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ai_reviewed_prs",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "pr_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.pr_id }}"
+            }
+          ]
+        }
+      },
+      "id": "cb6b398d-be20-4f48-a249-d44797d07af1",
+      "name": "Only Unreviewed PRs",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        0
+      ],
+      "alwaysOutputData": false,
+      "notesInFlow": true,
+      "notes": "Пункт 3: If Row Does Not Exist в таблице ai_reviewed_prs, условие pr_id = входному pr_id. Если PR уже есть, нода возвращает 0 items: diff, AI Agent и публикация не запускаются. Проверяется наличие ревью любой моделью. Always Output Data должен быть выключен."
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ai_reviewed_prs",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "pr_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.repository.full_name + '#' + $json.body.issue.number }}"
+            }
+          ]
+        }
+      },
+      "id": "a633a78f-dbbf-49c4-b9bf-d1cc7ab6ce03",
+      "name": "Only Unreviewed Other PRs",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        432
+      ],
+      "alwaysOutputData": false,
+      "notesInFlow": true,
+      "notes": "Проверка перед /make_other_ai_review: If Row Does Not Exist в ai_reviewed_prs, pr_id = owner/repository#number. Если PR уже проверен любой моделью, возвращает 0 items и завершает ветку до получения diff и вызова второй модели. Исходный webhook передаётся дальше без изменений. Always Output Data должен быть выключен."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get file's PR info": {
+      "main": [
+        [
+          {
+            "node": "Code Review Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Code Review Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PR Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Is PR Opened",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Robot1": {
+      "main": [
+        [
+          {
+            "node": "Store Main AI Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Review Agent1": {
+      "main": [
+        [
+          {
+            "node": "GitHub Robot1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PR Comment Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Only Unreviewed Other PRs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Main Review Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Code Review Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GitHub Robot": {
+      "main": [
+        [
+          {
+            "node": "Store Other AI Review",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code Review Agent": {
+      "main": [
+        [
+          {
+            "node": "GitHub Robot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get file's Other PR info": {
+      "main": [
+        [
+          {
+            "node": "Code Review Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Main AI Review": {
+      "main": [
+        [
+          {
+            "node": "Add Label to PR1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Other AI Review": {
+      "main": [
+        [
+          {
+            "node": "Add Label to PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is PR Opened": {
+      "main": [
+        [
+          {
+            "node": "Prepare Main PR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Is Main Review Command": {
+      "main": [
+        [
+          {
+            "node": "Prepare Main PR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Prepare Main PR": {
+      "main": [
+        [
+          {
+            "node": "Only Unreviewed PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Unreviewed PRs": {
+      "main": [
+        [
+          {
+            "node": "Get file's PR info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Unreviewed Other PRs": {
+      "main": [
+        [
+          {
+            "node": "Get file's Other PR info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7bc2ae9e-af82-469c-8cc6-58bd91951210",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68dbbb4e8fa686c3fd4e9982ade6836edb66976f207553e7ac22df961581c78c"
+  },
+  "nodeGroups": [],
+  "id": "z7S5nBenYA1jdbNu",
+  "tags": []
+}
