@@ -278,7 +278,7 @@
       "name": "OpenAI Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "position": [
-        816,
+        1040,
         640
       ],
       "typeVersion": 1.2,
@@ -315,7 +315,7 @@
       "name": "GitHub Robot",
       "type": "n8n-nodes-base.github",
       "position": [
-        1216,
+        1440,
         432
       ],
       "webhookId": "4392c85d-31e9-4ebd-8f4d-d556cbb8f3e0",
@@ -357,7 +357,7 @@
       "name": "Add Label to PR",
       "type": "n8n-nodes-base.github",
       "position": [
-        1664,
+        1888,
         432
       ],
       "webhookId": "70d2db56-965b-4f1f-817c-1fbb311320c0",
@@ -381,7 +381,7 @@
       "name": "Code Review Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "position": [
-        848,
+        1072,
         432
       ],
       "typeVersion": 1.9
@@ -406,7 +406,7 @@
       "name": "Get file's Other PR info",
       "type": "n8n-nodes-base.httpRequest",
       "position": [
-        544,
+        768,
         400
       ],
       "typeVersion": 4.2,
@@ -575,7 +575,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1440,
+        1664,
         432
       ],
       "notesInFlow": true,
@@ -716,6 +716,38 @@
       "alwaysOutputData": false,
       "notesInFlow": true,
       "notes": "Пункт 3: If Row Does Not Exist в таблице ai_reviewed_prs, условие pr_id = входному pr_id. Если PR уже есть, нода возвращает 0 items: diff, AI Agent и публикация не запускаются. Проверяется наличие ревью любой моделью. Always Output Data должен быть выключен."
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ai_reviewed_prs",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "pr_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.repository.full_name + '#' + $json.body.issue.number }}"
+            }
+          ]
+        }
+      },
+      "id": "a633a78f-dbbf-49c4-b9bf-d1cc7ab6ce03",
+      "name": "Only Unreviewed Other PRs",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        432
+      ],
+      "alwaysOutputData": false,
+      "notesInFlow": true,
+      "notes": "Проверка перед /make_other_ai_review: If Row Does Not Exist в ai_reviewed_prs, pr_id = owner/repository#number. Если PR уже проверен любой моделью, возвращает 0 items и завершает ветку до получения diff и вызова второй модели. Исходный webhook передаётся дальше без изменений. Always Output Data должен быть выключен."
     }
   ],
   "pinData": {},
@@ -790,7 +822,7 @@
       "main": [
         [
           {
-            "node": "Get file's Other PR info",
+            "node": "Only Unreviewed Other PRs",
             "type": "main",
             "index": 0
           }
@@ -910,6 +942,17 @@
         [
           {
             "node": "Get file's PR info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Unreviewed Other PRs": {
+      "main": [
+        [
+          {
+            "node": "Get file's Other PR info",
             "type": "main",
             "index": 0
           }

@@ -1,7 +1,7 @@
 # Data Table для результатов ревью
 
 В `workflow_hw.json` добавлено сохранение проверенных PR в таблицу
-`ai_reviewed_prs` и проверка перед запуском основной модели (пункты 2–3
+`ai_reviewed_prs` и проверка перед запуском обеих моделей (пункты 2–3
 домашнего задания).
 
 ## Создание таблицы в n8n
@@ -22,14 +22,18 @@
    `id` — идентификатор строки таблицы, а `pr_id` — ключ проверенного PR.
 
 4. Импортируйте обновлённый `workflow_hw.json`.
-5. Откройте ноды **Store Main AI Review**, **Store Other AI Review**
-   и **Only Unreviewed PRs**. Во всех выбрана таблица по имени
+5. Откройте ноды **Store Main AI Review**, **Store Other AI Review**,
+   **Only Unreviewed PRs** и **Only Unreviewed Other PRs**. Во всех выбрана
+   таблица по имени
    **Data table → By Name → ai_reviewed_prs**.
    В нодах сохранения настроены **Row → Insert** и ручное сопоставление
    колонок. В **Only Unreviewed PRs** выбрана операция
    **If Row Does Not Exist** с условием `pr_id` **Equals** `{{ $json.pr_id }}`.
+   В **Only Unreviewed Other PRs** используется та же операция с условием
+   `pr_id` **Equals**
+   `{{ $json.body.repository.full_name + '#' + $json.body.issue.number }}`.
    Если ваша версия n8n не поддерживает выбор таблицы по имени, выберите
-   созданную таблицу через **From list** во всех трёх нодах.
+   созданную таблицу через **From list** во всех четырёх нодах.
 6. Проверьте сопоставление колонок и доступность credentials GitHub и моделей,
    затем сохраните и активируйте workflow.
 
@@ -81,8 +85,8 @@ PR Comment Trigger → If [false] → Is Main Review Command [true]
     → Prepare Main PR
 ```
 
-Нода **If** распознаёт `/make_other_ai_review` и направляет эту команду во
-вторую модель. **Is Main Review Command** пропускает только новый комментарий
+Нода **If** распознаёт `/make_other_ai_review` и направляет эту команду на
+проверку перед второй моделью. **Is Main Review Command** пропускает только новый комментарий
 `/make_ai_review` в PR: обычные issues, редактирования, удаления комментариев
 и любой другой текст заканчивают выполнение на фильтре.
 
@@ -99,11 +103,24 @@ Prepare Main PR → Only Unreviewed PRs → Get file's PR info
 завершается до получения diff и вызова модели. Если строки нет, нода
 пропускает исходные данные дальше без изменений.
 
-Поиск выполняется только по `pr_id`: запись о ревью второй моделью тоже
-блокирует последующий `/make_ai_review`. Команда `/make_other_ai_review`
-сохраняет свой отдельный маршрут к второй модели.
+Ветка `/make_other_ai_review` проходит аналогичную проверку:
 
-В настройках **Only Unreviewed PRs** оставьте **Always Output Data** выключенным:
+```text
+PR Comment Trigger → If [true] → Only Unreviewed Other PRs
+    → Get file's Other PR info → Code Review Agent → GitHub Robot
+    → Store Other AI Review → Add Label to PR
+```
+
+**Only Unreviewed Other PRs** вычисляет такой же ключ `owner/repository#number`
+из исходного webhook. Если ключ уже есть в таблице, нода возвращает **0 items**:
+получение diff, вторая модель и публикация review не запускаются.
+
+Обе проверки ищут только `pr_id`, независимо от модели: любое уже сохранённое
+ревью этого PR блокирует обе команды. Например, после автоматического ревью
+при открытии PR команда `/make_other_ai_review` тоже будет пропущена.
+
+В настройках **Only Unreviewed PRs** и **Only Unreviewed Other PRs**
+оставьте **Always Output Data** выключенным:
 иначе n8n передаст пустой item дальше даже для уже проверенного PR.
 
 **Is PR Opened** разрешает автоматический запуск только при `action = opened`.
@@ -112,8 +129,9 @@ Prepare Main PR → Only Unreviewed PRs → Get file's PR info
 
 ## Проверка и подтверждение для сдачи
 
-1. Отправьте `/make_other_ai_review` отдельным новым комментарием на вкладке
-   **Conversation** тестового PR.
+1. Выберите тестовый PR, которого ещё нет в таблице (например, открытый до
+   активации workflow), и отправьте `/make_other_ai_review` отдельным новым
+   комментарием на вкладке **Conversation**.
 2. Убедитесь, что review опубликовано в PR, а в **Executions** успешно
    выполнена нода **Store Other AI Review**.
 3. Откройте **Data tables → ai_reviewed_prs**: должна появиться строка
@@ -137,3 +155,14 @@ Prepare Main PR → Only Unreviewed PRs → Get file's PR info
    команду ещё раз: повторный запуск должен остановиться на проверке таблицы.
 6. Сохраните скриншот **Executions** с результатом проверки и содержимого
    таблицы для того же PR.
+
+### Проверка повторного вызова второй модели
+
+1. Для PR без записи в таблице отправьте `/make_other_ai_review` и дождитесь
+   публикации review и выполнения **Store Other AI Review**.
+2. Отправьте новый комментарий `/make_other_ai_review` в тот же PR.
+3. В **Executions** нода **Only Unreviewed Other PRs** должна вернуть **0 items**.
+   Получение diff, **Code Review Agent** и **GitHub Robot** не должны выполняться.
+4. Убедитесь, что число review в PR и строк в таблице не увеличилось.
+5. Для PR с уже сохранённым ревью основной моделью эта команда также должна
+   завершиться на **Only Unreviewed Other PRs**.
