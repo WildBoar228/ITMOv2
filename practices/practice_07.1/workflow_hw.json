@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "url": "=https://api.github.com/repos/{{ $json.body.pull_request.base.repo.full_name }}/pulls/{{ $json.body.number }}",
+        "url": "=https://api.github.com/repos/{{ $json.repository }}/pulls/{{ $json.pr_number }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpBearerAuth",
         "sendHeaders": true,
@@ -21,7 +21,7 @@
       "name": "Get file's PR info",
       "type": "n8n-nodes-base.httpRequest",
       "position": [
-        336,
+        960,
         0
       ],
       "typeVersion": 4.2,
@@ -46,7 +46,7 @@
       "name": "OpenAI Chat Model1",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "position": [
-        736,
+        1200,
         208
       ],
       "typeVersion": 1.2,
@@ -112,7 +112,7 @@
           "cachedResultName": "ITMOv2",
           "cachedResultUrl": "https://github.com/WildBoar228/ITMOv2"
         },
-        "pullRequestNumber": "={{ $('PR Trigger1').first().json.body.number }}",
+        "pullRequestNumber": "={{ $('Prepare Main PR').first().json.pr_number }}",
         "event": "comment",
         "body": "={{ $json.output }}",
         "additionalFields": {}
@@ -121,7 +121,7 @@
       "name": "GitHub Robot1",
       "type": "n8n-nodes-base.github",
       "position": [
-        1136,
+        1600,
         0
       ],
       "webhookId": "4392c85d-31e9-4ebd-8f4d-d556cbb8f3e0",
@@ -150,7 +150,7 @@
           "cachedResultName": "ITMOv2",
           "cachedResultUrl": "https://github.com/WildBoar228/ITMOv2"
         },
-        "issueNumber": "={{ $('PR Trigger1').first().json.body.number }}",
+        "issueNumber": "={{ $('Prepare Main PR').first().json.pr_number }}",
         "editFields": {
           "labels": [
             {
@@ -163,7 +163,7 @@
       "name": "Add Label to PR1",
       "type": "n8n-nodes-base.github",
       "position": [
-        1584,
+        2048,
         0
       ],
       "webhookId": "70d2db56-965b-4f1f-817c-1fbb311320c0",
@@ -187,7 +187,7 @@
       "name": "Code Review Agent1",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "position": [
-        768,
+        1232,
         0
       ],
       "typeVersion": 1.9
@@ -429,9 +429,9 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "pr_id": "={{ $('PR Trigger1').first().json.body.pull_request.base.repo.full_name + '#' + $('PR Trigger1').first().json.body.number }}",
-            "repository": "={{ $('PR Trigger1').first().json.body.pull_request.base.repo.full_name }}",
-            "pr_number": "={{ $('PR Trigger1').first().json.body.number }}",
+            "pr_id": "={{ $('Prepare Main PR').first().json.pr_id }}",
+            "repository": "={{ $('Prepare Main PR').first().json.repository }}",
+            "pr_number": "={{ $('Prepare Main PR').first().json.pr_number }}",
             "model": "openai/gpt-5.5",
             "review_url": "={{ $json.html_url }}"
           },
@@ -493,7 +493,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        1360,
+        1824,
         0
       ],
       "notesInFlow": true,
@@ -580,6 +580,142 @@
       ],
       "notesInFlow": true,
       "notes": "Использует ту же таблицу ai_reviewed_prs, что и Store Main AI Review. Сохраняет ключ PR, репозиторий, номер, вторую модель и ссылку после успешной публикации review. Инструкция: DATA_TABLE_SETUP.md."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "37dd3a4c-20ad-4de9-9165-39653ea8155a",
+              "leftValue": "={{ $json.body.action === 'opened' && !!$json.body.pull_request }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6dc952a2-399c-4b04-9af3-8b55c2656825",
+      "name": "Is PR Opened",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "b3444bae-be42-4c9e-af15-09ae2ffab7dc",
+              "leftValue": "={{\n  $json.body.action === 'created'\n  && !!$json.body.issue?.pull_request\n  && ($json.body.comment?.body ?? '').trim() === '/make_ai_review'\n}}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2449d95a-1db2-4b4d-bb6b-0d5387e45e55",
+      "name": "Is Main Review Command",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        272,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1d3d20b-2b87-4f41-92e1-cce963ed2888",
+              "name": "pr_id",
+              "value": "={{ $json.body.repository.full_name + '#' + ($json.body.issue?.number ?? $json.body.number) }}",
+              "type": "string"
+            },
+            {
+              "id": "55e3b09f-ddb5-427c-a14c-332842329c8a",
+              "name": "repository",
+              "value": "={{ $json.body.repository.full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "c429b21a-0417-4efa-9b59-d27ccfbfc010",
+              "name": "pr_number",
+              "value": "={{ $json.body.issue?.number ?? $json.body.number }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "id": "6e9986dd-f1a8-44dc-95fe-8488b85f7414",
+      "name": "Prepare Main PR",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        512,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "rowNotExists",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ai_reviewed_prs",
+          "mode": "name"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "pr_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.pr_id }}"
+            }
+          ]
+        }
+      },
+      "id": "cb6b398d-be20-4f48-a249-d44797d07af1",
+      "name": "Only Unreviewed PRs",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        736,
+        0
+      ],
+      "alwaysOutputData": false,
+      "notesInFlow": true,
+      "notes": "Пункт 3: If Row Does Not Exist в таблице ai_reviewed_prs, условие pr_id = входному pr_id. Если PR уже есть, нода возвращает 0 items: diff, AI Agent и публикация не запускаются. Проверяется наличие ревью любой моделью. Always Output Data должен быть выключен."
     }
   ],
   "pinData": {},
@@ -610,7 +746,7 @@
       "main": [
         [
           {
-            "node": "Get file's PR info",
+            "node": "Is PR Opened",
             "type": "main",
             "index": 0
           }
@@ -655,6 +791,13 @@
         [
           {
             "node": "Get file's Other PR info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Main Review Command",
             "type": "main",
             "index": 0
           }
@@ -721,6 +864,52 @@
         [
           {
             "node": "Add Label to PR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is PR Opened": {
+      "main": [
+        [
+          {
+            "node": "Prepare Main PR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Is Main Review Command": {
+      "main": [
+        [
+          {
+            "node": "Prepare Main PR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Prepare Main PR": {
+      "main": [
+        [
+          {
+            "node": "Only Unreviewed PRs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Only Unreviewed PRs": {
+      "main": [
+        [
+          {
+            "node": "Get file's PR info",
             "type": "main",
             "index": 0
           }
