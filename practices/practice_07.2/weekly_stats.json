@@ -2,7 +2,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "# Пункты 4–5: еженедельная статистика\nВладелец и репозиторий задаются в Repository settings.\nПонедельник 09:00 (Europe/Moscow). Период: последние 7 дней.\nЧетыре GitHub Search-запроса: bug, task, feature, остальные Issues.\nMerge дожидается всех выборок, Code группирует по типу и автору.",
+        "content": "# Пункты 4–6: еженедельная статистика → Gmail\nВладелец и репозиторий задаются в Repository settings.\nПолучатель — в Report settings; аккаунт отправителя — в Send weekly report.\nПонедельник 09:00 (Europe/Moscow). Период: последние 7 дней.\nЧетыре GitHub-запроса → группировка по типу и автору → HTML-письмо.",
         "width": 656,
         "height": 240
       },
@@ -25,7 +25,7 @@
       },
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [-240, 64],
+      "position": [-480, 64],
       "id": "fdb66091-322a-4ac0-8bff-df164ad9231a",
       "name": "Monday 09:00"
     },
@@ -53,9 +53,31 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [0, 64],
+      "position": [-240, 64],
       "id": "153d0459-c114-4b9b-9a08-51c6ae314208",
       "name": "Repository settings"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a67e73bf-ab44-4a54-8194-d84d9aec7102",
+              "name": "recipient",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 64],
+      "id": "47f719b3-7e67-4c91-82eb-683f50ccdebb",
+      "name": "Report settings"
     },
     {
       "parameters": {
@@ -286,11 +308,42 @@
       "position": [1056, 64],
       "id": "e122bfed-258f-429b-a7b0-07fb8b61674b",
       "name": "Group weekly statistics"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const stats = $json;\nconst to = ($('Report settings').first().json.recipient ?? '').trim();\nif (!to) throw new Error('Укажите recipient в ноде Report settings');\nconst escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[character]));\nconst timezone = stats.period.timezone;\nconst dateTime = new Intl.DateTimeFormat('ru-RU', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });\nconst dateOnly = new Intl.DateTimeFormat('ru-RU', { timeZone: timezone });\nconst start = new Date(stats.period.start);\nconst end = new Date(stats.period.end);\nconst subject = `${stats.repository}: Issues за неделю (${dateOnly.format(start)} — ${dateOnly.format(end)})`;\nconst cellStyle = 'border:1px solid #d1d5db;padding:8px 12px;text-align:left;';\nconst table = (headers, rows) => {\n  const head = headers.map(header => `<th scope=\"col\" style=\"${cellStyle}background:#f3f4f6;\">${escapeHtml(header)}</th>`).join('');\n  const body = rows.length\n    ? rows.map(row => `<tr>${row.map(value => `<td style=\"${cellStyle}\">${escapeHtml(value)}</td>`).join('')}</tr>`).join('')\n    : `<tr><td colspan=\"${headers.length}\" style=\"${cellStyle}\">Нет Issues за период</td></tr>`;\n  return `<table cellpadding=\"0\" cellspacing=\"0\" style=\"border-collapse:collapse;width:100%;margin:12px 0 24px;font-size:14px;\"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;\n};\nconst typeTable = table(['Тип', 'Всего', 'Открыто', 'Закрыто'], stats.byType.map(row => [row.type, row.total, row.open, row.closed]));\nconst authorTable = table(['Автор', 'Всего', 'bug', 'task', 'feature', 'unknown', 'Открыто', 'Закрыто'], stats.byAuthor.map(row => [row.author, row.total, row.bug, row.task, row.feature, row.unknown, row.open, row.closed]));\nconst repositoryUrl = `https://github.com/${stats.repository.split('/').map(encodeURIComponent).join('/')}`;\nconst html = `<!doctype html>\n<html lang=\"ru\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>${escapeHtml(subject)}</title></head>\n<body style=\"margin:0;padding:24px;background:#f9fafb;color:#111827;font-family:Arial,sans-serif;line-height:1.5;\">\n<div style=\"max-width:960px;margin:0 auto;padding:24px;background:#ffffff;\">\n<h1 style=\"font-size:24px;margin:0 0 16px;\">Еженедельная статистика GitHub Issues</h1>\n<p>Репозиторий: <a href=\"${escapeHtml(repositoryUrl)}\">${escapeHtml(stats.repository)}</a></p>\n<p>Период: ${escapeHtml(dateTime.format(start))} — ${escapeHtml(dateTime.format(end))} (${escapeHtml(timezone)}), не включая конец периода.</p>\n<p><strong>Создано за период: ${escapeHtml(stats.totalIssues)}</strong><br>Из них открыто сейчас: ${escapeHtml(stats.totalOpen)}; закрыто сейчас: ${escapeHtml(stats.totalClosed)}.</p>\n${stats.totalIssues === 0 ? '<p>За этот период новые Issues не создавались.</p>' : ''}\n<h2 style=\"font-size:18px;\">По типу</h2>${typeTable}\n<h2 style=\"font-size:18px;\">По автору</h2>${authorTable}\n<p style=\"font-size:12px;color:#4b5563;\">Учтены Issues, созданные за последние 7 дней; Pull Requests исключены. Типы и состояния показаны на момент сбора данных. unknown включает needs-triage, Issues без типа и с несколькими типами.</p>\n</div></body></html>`;\nreturn { json: { ...stats, email: { to, subject, html } } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1312, 64],
+      "id": "4010fbbe-ad1f-4c3e-8d74-64616baefba9",
+      "name": "Build HTML report"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.email.to }}",
+        "subject": "={{ $json.email.subject }}",
+        "emailType": "html",
+        "message": "={{ $json.email.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1568, 64],
+      "id": "94c1ca2d-7c54-49a5-8033-29e02d58cf18",
+      "name": "Send weekly report"
     }
   ],
   "connections": {
     "Monday 09:00": { "main": [[{ "node": "Repository settings", "type": "main", "index": 0 }]] },
-    "Repository settings": { "main": [[{ "node": "Prepare week", "type": "main", "index": 0 }]] },
+    "Repository settings": { "main": [[{ "node": "Report settings", "type": "main", "index": 0 }]] },
+    "Report settings": { "main": [[{ "node": "Prepare week", "type": "main", "index": 0 }]] },
     "Prepare week": {
       "main": [[
         { "node": "GitHub bugs this week", "type": "main", "index": 0 },
@@ -303,7 +356,9 @@
     "GitHub tasks this week": { "main": [[{ "node": "Wait for all four queries", "type": "main", "index": 1 }]] },
     "GitHub features this week": { "main": [[{ "node": "Wait for all four queries", "type": "main", "index": 2 }]] },
     "GitHub other issues this week": { "main": [[{ "node": "Wait for all four queries", "type": "main", "index": 3 }]] },
-    "Wait for all four queries": { "main": [[{ "node": "Group weekly statistics", "type": "main", "index": 0 }]] }
+    "Wait for all four queries": { "main": [[{ "node": "Group weekly statistics", "type": "main", "index": 0 }]] },
+    "Group weekly statistics": { "main": [[{ "node": "Build HTML report", "type": "main", "index": 0 }]] },
+    "Build HTML report": { "main": [[{ "node": "Send weekly report", "type": "main", "index": 0 }]] }
   },
   "pinData": {},
   "active": false,
