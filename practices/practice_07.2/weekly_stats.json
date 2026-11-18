@@ -1,0 +1,311 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Пункты 4–5: еженедельная статистика\nВладелец и репозиторий задаются в Repository settings.\nПонедельник 09:00 (Europe/Moscow). Период: последние 7 дней.\nЧетыре GitHub Search-запроса: bug, task, feature, остальные Issues.\nMerge дожидается всех выборок, Code группирует по типу и автору.",
+        "width": 656,
+        "height": 240
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, -464],
+      "id": "614bd154-424b-48c5-a2d8-acf829960ff4",
+      "name": "Weekly statistics"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * MON"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-240, 64],
+      "id": "fdb66091-322a-4ac0-8bff-df164ad9231a",
+      "name": "Monday 09:00"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "071d8fd2-347b-40b9-9e3b-e3fdff44b4ea",
+              "name": "owner",
+              "value": "WildBoar228",
+              "type": "string"
+            },
+            {
+              "id": "efec849b-99b1-439d-a02a-94c9dbd930fc",
+              "name": "repository",
+              "value": "ITMOv2",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [0, 64],
+      "id": "153d0459-c114-4b9b-9a08-51c6ae314208",
+      "name": "Repository settings"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const settings = $input.first().json;\nconst repository = `${settings.owner.trim()}/${settings.repository.trim()}`;\nconst end = $now.toUTC().startOf('second');\nconst start = end.minus({ days: 7 });\nconst format = date => date.toISO({ suppressMilliseconds: true });\n// GitHub ranges are inclusive; exclude the end by subtracting one second.\nconst base = `repo:${repository} is:issue created:${format(start)}..${format(end.minus({ seconds: 1 }))}`;\nreturn [{ json: {\n  repository,\n  period: { start: format(start), end: format(end), endExclusive: true, timezone: 'Europe/Moscow' },\n  queries: {\n    bug: `${base} label:bug`,\n    task: `${base} label:task`,\n    feature: `${base} label:feature`,\n    other: `${base} -label:bug -label:task -label:feature`\n  }\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 64],
+      "id": "9db6c186-7968-45d2-a068-eef33b2d6b59",
+      "name": "Prepare week"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/search/issues",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "q", "value": "={{ $('Prepare week').first().json.queries.bug }}" },
+            { "name": "per_page", "value": "100" },
+            { "name": "sort", "value": "created" },
+            { "name": "order", "value": "asc" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "json" } },
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  { "type": "qs", "name": "page", "value": "={{ $pageCount + 1 }}" }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !($response.headers.link ?? '').includes('rel=\"next\"') }}",
+              "limitPagesFetched": true,
+              "maxRequests": 10,
+              "requestInterval": 2200
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [512, -224],
+      "id": "888b9854-bea4-4dd6-b88f-a64087743ef3",
+      "name": "GitHub bugs this week",
+      "credentials": {
+        "githubApi": { "id": "600j3DTJzCH4ORkz", "name": "GitHub account 42" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/search/issues",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "q", "value": "={{ $('Prepare week').first().json.queries.task }}" },
+            { "name": "per_page", "value": "100" },
+            { "name": "sort", "value": "created" },
+            { "name": "order", "value": "asc" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "json" } },
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  { "type": "qs", "name": "page", "value": "={{ $pageCount + 1 }}" }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !($response.headers.link ?? '').includes('rel=\"next\"') }}",
+              "limitPagesFetched": true,
+              "maxRequests": 10,
+              "requestInterval": 2200
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [512, -32],
+      "id": "8fc6bf06-70f7-4a56-80f5-a02fb7e13ba9",
+      "name": "GitHub tasks this week",
+      "credentials": {
+        "githubApi": { "id": "600j3DTJzCH4ORkz", "name": "GitHub account 42" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/search/issues",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "q", "value": "={{ $('Prepare week').first().json.queries.feature }}" },
+            { "name": "per_page", "value": "100" },
+            { "name": "sort", "value": "created" },
+            { "name": "order", "value": "asc" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "json" } },
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  { "type": "qs", "name": "page", "value": "={{ $pageCount + 1 }}" }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !($response.headers.link ?? '').includes('rel=\"next\"') }}",
+              "limitPagesFetched": true,
+              "maxRequests": 10,
+              "requestInterval": 2200
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [512, 160],
+      "id": "eb998871-2857-4a48-aabe-d7bc40c446db",
+      "name": "GitHub features this week",
+      "credentials": {
+        "githubApi": { "id": "600j3DTJzCH4ORkz", "name": "GitHub account 42" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.github.com/search/issues",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "q", "value": "={{ $('Prepare week').first().json.queries.other }}" },
+            { "name": "per_page", "value": "100" },
+            { "name": "sort", "value": "created" },
+            { "name": "order", "value": "asc" }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Accept", "value": "application/vnd.github+json" },
+            { "name": "X-GitHub-Api-Version", "value": "2022-11-28" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "responseFormat": "json" } },
+          "pagination": {
+            "pagination": {
+              "paginationMode": "updateAParameterInEachRequest",
+              "parameters": {
+                "parameters": [
+                  { "type": "qs", "name": "page", "value": "={{ $pageCount + 1 }}" }
+                ]
+              },
+              "paginationCompleteWhen": "other",
+              "completeExpression": "={{ !($response.headers.link ?? '').includes('rel=\"next\"') }}",
+              "limitPagesFetched": true,
+              "maxRequests": 10,
+              "requestInterval": 2200
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [512, 352],
+      "id": "67bed395-bc42-4743-9f56-13318ca28539",
+      "name": "GitHub other issues this week",
+      "credentials": {
+        "githubApi": { "id": "600j3DTJzCH4ORkz", "name": "GitHub account 42" }
+      }
+    },
+    {
+      "parameters": { "mode": "append", "numberInputs": 4 },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [800, 64],
+      "id": "78f50e0e-c3c8-4bff-a949-91e282c1cdbe",
+      "name": "Wait for all four queries"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const config = $('Prepare week').first().json;\nconst sources = [\n  ['bug', 'GitHub bugs this week'],\n  ['task', 'GitHub tasks this week'],\n  ['feature', 'GitHub features this week'],\n  ['other', 'GitHub other issues this week']\n];\nconst unique = new Map();\nconst queryStats = [];\nlet fetchedRows = 0;\nfor (const [query, name] of sources) {\n  const pages = $(name).all();\n  if (!pages.length) throw new Error(`${name}: no response`);\n  const ids = new Set();\n  const expected = pages[0].json.total_count;\n  for (const { json: page } of pages) {\n    if (!Array.isArray(page.items) || !Number.isInteger(page.total_count) || page.total_count < 0) {\n      throw new Error(`${name}: invalid GitHub response`);\n    }\n    if (page.incomplete_results !== false || page.total_count > 1000) {\n      throw new Error(`${name}: incomplete search results or more than 1000 matches; narrow the period before retrying`);\n    }\n    if (page.total_count !== expected) throw new Error(`${name}: search results changed during pagination; retry`);\n    for (const issue of page.items) {\n      if (!Number.isInteger(issue.id)) throw new Error(`${name}: issue without an id`);\n      ids.add(issue.id);\n      unique.set(issue.id, issue);\n      fetchedRows++;\n    }\n  }\n  if (ids.size !== expected) throw new Error(`${name}: expected ${expected} issues, received ${ids.size}; retry`);\n  queryStats.push({ query, total: expected, pages: pages.length, fetched: ids.size });\n}\nconst types = ['bug', 'task', 'feature', 'unknown'];\nconst emptyCounts = () => ({ total: 0, open: 0, closed: 0 });\nconst byType = new Map(types.map(type => [type, { type, ...emptyCounts() }]));\nconst byAuthor = new Map();\nconst issues = [];\nconst start = Date.parse(config.period.start);\nconst end = Date.parse(config.period.end);\nif (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) throw new Error('Invalid reporting period');\nlet excludedIssues = 0;\nfor (const issue of unique.values()) {\n  const createdAt = Date.parse(issue.created_at);\n  if (issue.pull_request || !Number.isFinite(createdAt) || createdAt < start || createdAt >= end) {\n    excludedIssues++;\n    continue;\n  }\n  const labels = (issue.labels ?? []).map(label => typeof label === 'string' ? label : label.name).filter(Boolean).map(label => label.toLowerCase());\n  const matched = types.filter(type => type !== 'unknown' && labels.includes(type));\n  const type = !labels.includes('needs-triage') && matched.length === 1 ? matched[0] : 'unknown';\n  const author = issue.user?.login ?? '(deleted user)';\n  if (!['open', 'closed'].includes(issue.state)) throw new Error(`Issue #${issue.number}: invalid state`);\n  if (!byAuthor.has(author)) byAuthor.set(author, { author, ...emptyCounts(), bug: 0, task: 0, feature: 0, unknown: 0 });\n  const typeRow = byType.get(type);\n  const authorRow = byAuthor.get(author);\n  typeRow.total++;\n  typeRow[issue.state]++;\n  authorRow.total++;\n  authorRow[issue.state]++;\n  authorRow[type]++;\n  issues.push({ number: issue.number, title: issue.title, url: issue.html_url, author, type, state: issue.state, createdAt: issue.created_at });\n}\nissues.sort((a, b) => a.number - b.number);\nconst typeRows = [...byType.values()];\nreturn [{ json: {\n  repository: config.repository,\n  period: config.period,\n  totalIssues: issues.length,\n  totalOpen: typeRows.reduce((sum, row) => sum + row.open, 0),\n  totalClosed: typeRows.reduce((sum, row) => sum + row.closed, 0),\n  byType: typeRows,\n  byAuthor: [...byAuthor.values()].sort((a, b) => b.total - a.total || a.author.localeCompare(b.author)),\n  queryStats,\n  duplicatesRemoved: fetchedRows - unique.size,\n  excludedIssues,\n  issues\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1056, 64],
+      "id": "e122bfed-258f-429b-a7b0-07fb8b61674b",
+      "name": "Group weekly statistics"
+    }
+  ],
+  "connections": {
+    "Monday 09:00": { "main": [[{ "node": "Repository settings", "type": "main", "index": 0 }]] },
+    "Repository settings": { "main": [[{ "node": "Prepare week", "type": "main", "index": 0 }]] },
+    "Prepare week": {
+      "main": [[
+        { "node": "GitHub bugs this week", "type": "main", "index": 0 },
+        { "node": "GitHub tasks this week", "type": "main", "index": 0 },
+        { "node": "GitHub features this week", "type": "main", "index": 0 },
+        { "node": "GitHub other issues this week", "type": "main", "index": 0 }
+      ]]
+    },
+    "GitHub bugs this week": { "main": [[{ "node": "Wait for all four queries", "type": "main", "index": 0 }]] },
+    "GitHub tasks this week": { "main": [[{ "node": "Wait for all four queries", "type": "main", "index": 1 }]] },
+    "GitHub features this week": { "main": [[{ "node": "Wait for all four queries", "type": "main", "index": 2 }]] },
+    "GitHub other issues this week": { "main": [[{ "node": "Wait for all four queries", "type": "main", "index": 3 }]] },
+    "Wait for all four queries": { "main": [[{ "node": "Group weekly statistics", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": { "executionOrder": "v1", "timezone": "Europe/Moscow" }
+}
