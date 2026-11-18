@@ -28,10 +28,10 @@
    **Data table → By Name → ai_reviewed_prs**.
    В нодах сохранения настроены **Row → Insert** и ручное сопоставление
    колонок. В **Only Unreviewed PRs** выбрана операция
-   **If Row Does Not Exist** с условием `pr_id` **Equals** `{{ $json.pr_id }}`.
-   В **Only Unreviewed Other PRs** используется та же операция с условием
-   `pr_id` **Equals**
-   `{{ $json.body.repository.full_name + '#' + $json.body.issue.number }}`.
+   **If Row Does Not Exist**. В обеих проверках выбрано
+   **Must Match → All Conditions** и два условия:
+   `pr_id` **Equals** `{{ $json.pr_id }}` и
+   `model` **Equals** `{{ $json.model }}`.
    Если ваша версия n8n не поддерживает выбор таблицы по имени, выберите
    созданную таблицу через **From list** во всех четырёх нодах.
 6. Проверьте сопоставление колонок и доступность credentials GitHub и моделей,
@@ -61,14 +61,15 @@ GitHub Robot → Store Other AI Review → Add Label to PR
 `pr_id` — составной идентификатор `owner/repository#number`, а не числовой
 GitHub database ID. Он одинаков для двух веток и различает PR с одинаковыми
 номерами в разных репозиториях. Для событий `pull_request` номер берётся из
-`body.number`, а для `issue_comment` — из `body.issue.number`. Нода
-**Prepare Main PR** приводит оба события к общей структуре `pr_id`,
-`repository`, `pr_number`. Основная ветка использует эту структуру для
-получения diff, публикации review, сохранения строки и установки метки.
+`body.number`, а для `issue_comment` — из `body.issue.number`. Ноды
+**Prepare Main PR** и **Prepare Other PR** формируют общую структуру
+`pr_id`, `repository`, `pr_number`, `model`, `review_branch`.
+После проверки таблицы обе ветки переходят в общий путь точечного ревью.
 
 `review_url` берётся из ответа ноды публикации review (`html_url`).
-При смене модели обновите также значение колонки `model` в соответствующей
-ноде сохранения.
+При смене модели обновите её идентификатор в Chat Model и поле `model`
+в соответствующей ноде **Prepare Main PR** или **Prepare Other PR**.
+Проверки и сохранение используют это поле автоматически.
 
 ## Как исключаются повторные запуски
 
@@ -93,12 +94,10 @@ PR Comment Trigger → If [false] → Is Main Review Command [true]
 Далее оба входа основной ветки проходят одну проверку:
 
 ```text
-Prepare Main PR → Only Unreviewed PRs → Get file's PR info
-    → Code Review Agent1 → GitHub Robot1 → Store Main AI Review
-    → Add Label to PR1
+Prepare Main PR → Only Unreviewed PRs → Prepare Review Context
 ```
 
-**Only Unreviewed PRs** ищет строку с тем же `pr_id` в `ai_reviewed_prs`.
+**Only Unreviewed PRs** ищет строку с той же парой `pr_id` + `model` в `ai_reviewed_prs`.
 Если строка уже есть, нода возвращает **0 items** и основная ветка
 завершается до получения diff и вызова модели. Если строки нет, нода
 пропускает исходные данные дальше без изменений.
@@ -106,18 +105,20 @@ Prepare Main PR → Only Unreviewed PRs → Get file's PR info
 Ветка `/make_other_ai_review` проходит аналогичную проверку:
 
 ```text
-PR Comment Trigger → If [true] → Only Unreviewed Other PRs
-    → Get file's Other PR info → Code Review Agent → GitHub Robot
-    → Store Other AI Review → Add Label to PR
+PR Comment Trigger → If [true] → Prepare Other PR
+    → Only Unreviewed Other PRs → Prepare Review Context
 ```
 
-**Only Unreviewed Other PRs** вычисляет такой же ключ `owner/repository#number`
-из исходного webhook. Если ключ уже есть в таблице, нода возвращает **0 items**:
+**Only Unreviewed Other PRs** также проверяет пару `pr_id` + `model`.
+Если эта пара уже есть в таблице, нода возвращает **0 items**:
 получение diff, вторая модель и публикация review не запускаются.
 
-Обе проверки ищут только `pr_id`, независимо от модели: любое уже сохранённое
-ревью этого PR блокирует обе команды. Например, после автоматического ревью
-при открытии PR команда `/make_other_ai_review` тоже будет пропущена.
+Ревью одной моделью не блокирует другую: для одного PR возможны две строки
+с одинаковым `pr_id` и разным `model`. Повторный вызов той же модели блокируется.
+
+Общий путь получает файлы PR, разбивает patch на блоки, выбирает агента по
+`review_branch` и публикует inline-комментарии. Описание пункта 4:
+[INLINE_REVIEW_SETUP.md](INLINE_REVIEW_SETUP.md).
 
 В настройках **Only Unreviewed PRs** и **Only Unreviewed Other PRs**
 оставьте **Always Output Data** выключенным:
@@ -143,14 +144,14 @@ PR Comment Trigger → If [true] → Only Unreviewed Other PRs
 
 ### Проверка пункта 3
 
-1. Выберите PR, для которого в `ai_reviewed_prs` уже есть строка.
+1. Выберите PR, для которого в `ai_reviewed_prs` уже есть строка основной модели.
 2. Отправьте новый комментарий `/make_ai_review`.
 3. В **Executions** откройте запуск: команда должна пройти
    **Is Main Review Command**, а **Only Unreviewed PRs** — вернуть **0 items**.
    Ноды получения diff, модели и публикации review не должны выполняться.
 4. Убедитесь, что в PR не появилось новое review, а в таблице — новая строка.
 5. Для проверки первого запуска команды используйте существующий PR без строки
-   в таблице (например, открытый до активации workflow). Отправьте
+   основной модели в таблице (например, открытый до активации workflow). Отправьте
    `/make_ai_review`: должно появиться review и строка в таблице. Отправьте
    команду ещё раз: повторный запуск должен остановиться на проверке таблицы.
 6. Сохраните скриншот **Executions** с результатом проверки и содержимого
@@ -158,11 +159,11 @@ PR Comment Trigger → If [true] → Only Unreviewed Other PRs
 
 ### Проверка повторного вызова второй модели
 
-1. Для PR без записи в таблице отправьте `/make_other_ai_review` и дождитесь
+1. Для PR без записи второй модели отправьте `/make_other_ai_review` и дождитесь
    публикации review и выполнения **Store Other AI Review**.
 2. Отправьте новый комментарий `/make_other_ai_review` в тот же PR.
 3. В **Executions** нода **Only Unreviewed Other PRs** должна вернуть **0 items**.
    Получение diff, **Code Review Agent** и **GitHub Robot** не должны выполняться.
 4. Убедитесь, что число review в PR и строк в таблице не увеличилось.
-5. Для PR с уже сохранённым ревью основной моделью эта команда также должна
-   завершиться на **Only Unreviewed Other PRs**.
+5. Для PR с уже сохранённым ревью только основной моделью эта команда должна
+   выполнить ревью второй моделью и добавить вторую строку с другим `model`.
