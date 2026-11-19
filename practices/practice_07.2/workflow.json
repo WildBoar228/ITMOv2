@@ -73,7 +73,7 @@
     },
     {
       "parameters": {
-        "content": "# Update issue\nКаждая ветка проставляет свой лейбл. Комментарии не публикуются."
+        "content": "# Update issue\nbug / task / feature: установить лейбл, затем поприветствовать автора и сообщить класс.\nneeds-triage: только лейбл, без комментария."
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
@@ -502,6 +502,42 @@
           "name": "GitHub account 42"
         }
       }
+    },
+    {
+      "parameters": {
+        "resource": "issue",
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "value": "WildBoar228",
+          "mode": "list",
+          "cachedResultName": "WildBoar228",
+          "cachedResultUrl": "https://github.com/WildBoar228"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/WildBoar228/ITMOv2"
+        },
+        "issueNumber": "={{ $('Github Trigger').item.json.body.issue.number }}",
+        "body": "=Привет, @{{ $('Github Trigger').item.json.body.issue.user.login }}! Спасибо за обращение.\n\nIssue успешно классифицировано как **{{ $('Execute Classifier').item.json.type }}**. Присвоен соответствующий лейбл: `{{ $('Execute Classifier').item.json.type }}`."
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1504,
+        416
+      ],
+      "id": "611a10ee-ef1a-4323-91bc-52bd974e3294",
+      "name": "Greet and announce class",
+      "credentials": {
+        "githubApi": {
+          "id": "600j3DTJzCH4ORkz",
+          "name": "GitHub account 42"
+        }
+      }
     }
   ],
   "connections": {
@@ -555,6 +591,15 @@
           }
         ]
       ]
+    },
+    "Label bug": {
+      "main": [[{ "node": "Greet and announce class", "type": "main", "index": 0 }]]
+    },
+    "Label task": {
+      "main": [[{ "node": "Greet and announce class", "type": "main", "index": 0 }]]
+    },
+    "Label feature": {
+      "main": [[{ "node": "Greet and announce class", "type": "main", "index": 0 }]]
     },
     "Switch type": {
       "main": [
