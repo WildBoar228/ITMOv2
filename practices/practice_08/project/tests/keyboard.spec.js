@@ -36,7 +36,7 @@ test('5: полный сценарий квиза только через Tab, E
   await expect(play).toBeFocused();
 });
 
-test('5: редактор и Select работают только с клавиатуры', async ({ page }) => {
+test('5, 7–9: редактор сохраняет выбранный ответ, игра проходится с клавиатуры', async ({ page }) => {
   await openCollection(page);
   await tabTo(page, page.getByRole('button', { name: 'New game', exact: true }));
   await page.keyboard.press('Enter');
@@ -63,6 +63,20 @@ test('5: редактор и Select работают только с клави�
   await page.keyboard.press('Enter');
   await expect(savedTitle(page, 'Keyboard creation')).toBeVisible();
   await expect(page.getByRole('dialog')).toBeHidden();
+
+  // Проверяем сохранённое значение в игре, а не только текст Select в форме.
+  await tabTo(page, page.getByRole('button', { name: 'Play Keyboard creation', exact: true }));
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('heading', { name: 'Which option is correct?', exact: true })).toBeFocused();
+  await tabTo(page, dialog.getByRole('button', { name: 'Second', exact: true }));
+  await page.keyboard.press('Space');
+  await expect(dialog.getByRole('status')).toContainText('That’s right!');
+  await expect(dialog.getByRole('status')).toContainText('The second answer is correct.');
+  await expect(dialog.getByRole('button', { name: 'To the result', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(dialog.getByRole('heading', { name: 'Perfect score!' })).toBeVisible();
+  await expect(dialog.getByText('1/1', { exact: true })).toBeVisible();
 });
 
 test('5: Tab и Shift+Tab удерживают фокус в диалоге, Escape возвращает его', async ({ page }) => {

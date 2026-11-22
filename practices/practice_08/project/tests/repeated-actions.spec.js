@@ -68,23 +68,33 @@ test('6: ошибка чтения файла снимает блокировк�
 test('6: повторный ответ не меняет очки, таймер останавливается', async ({ page }) => {
   await page.clock.install();
   await openCollection(page);
-  await playButton(page).click();
-  const progress = page.getByRole('progressbar', { name: 'Time remaining' });
+  // Останавливаем часы до старта вопроса: через 5 с останется ровно 10 с,
+  // правильный ответ должен дать ровно 20 очков, даже после двойного клика.
   await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
-  const before = Number(await progress.getAttribute('aria-valuenow'));
+  await playButton(page).click();
+  const dialog = page.getByRole('dialog');
+  const progress = page.getByRole('progressbar', { name: 'Time remaining' });
+  await expect(progress).toHaveAttribute('aria-valuenow', '100');
   await page.clock.fastForward(5000);
-  expect(Number(await progress.getAttribute('aria-valuenow'))).toBeLessThan(before - 30);
-  const answer = page.getByRole('dialog').getByRole('button', { name: /^4(?: Correct answer)?$/ });
+  expect(Number(await progress.getAttribute('aria-valuenow'))).toBeCloseTo(100 * 10 / 15, 5);
+  const answer = dialog.getByRole('button', { name: /^4(?: Correct answer)?$/ });
   await answer.dblclick();
   await expect(answer).toBeDisabled();
   const feedback = page.getByRole('status');
-  const firstFeedback = await feedback.textContent();
+  await expect(feedback).toContainText('That’s right! +20 points');
+  await expect(dialog.getByText('20 points', { exact: true })).toBeVisible();
   const frozen = await progress.getAttribute('aria-valuenow');
   await page.clock.fastForward(10000);
-  await expect(feedback).toHaveText(firstFeedback);
+  await expect(feedback).toContainText('That’s right! +20 points');
+  await expect(dialog.getByText('20 points', { exact: true })).toBeVisible();
   await expect(progress).toHaveAttribute('aria-valuenow', frozen);
   await page.getByRole('button', { name: 'Next question', exact: true }).click();
   await expect(progress).toHaveAttribute('aria-valuenow', '100');
+  // Завершаем вторым, неверным ответом, чтобы проверить итоговый счёт.
+  await dialog.getByRole('button', { name: '5', exact: true }).click();
+  await dialog.getByRole('button', { name: 'To the result', exact: true }).click();
+  await expect(dialog.getByText('1/2', { exact: true })).toBeVisible();
+  await expect(dialog.locator('.result-score')).toHaveText('20pts');
 });
 
 test('5–6: таймаут блокирует ответы и переводит фокус на продолжение', async ({ page }) => {
