@@ -1,0 +1,23 @@
+body { min-width: 320px; min-height: 100vh; }
+button, input { font: inherit; }
+h1, h2, h3, p, button { overflow-wrap: anywhere; }
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 16px;
+}
+.answer-grid { display: grid; gap: 12px; margin: 24px 0; }
+.answer-grid .MuiButton-root {
+  justify-content: flex-start;
+  text-align: left;
+  padding: 16px;
+  min-height: 64px;
+}
+.answer-grid .MuiButton-root.Mui-disabled { color: #b1b7d6; }
+.answer-grid .MuiButton-root.answer-correct.Mui-disabled {
+  color: #eef0ff; background: #0c4d3a; border-color: #00d4a4;
+}
+.answer-grid .MuiButton-root.answer-wrong.Mui-disabled {
+  color: #eef0ff; background: #5a2230; border-color: #ff7582;
+}
+.question-title:focus, .screen-title:focus { outline: none; }
