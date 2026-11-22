@@ -8,6 +8,7 @@ export function validateDeck(deck) {
   return Boolean(
     deck && typeof deck.title === 'string' && deck.title.trim() &&
     Array.isArray(deck.questions) && deck.questions.length > 0 &&
+    ['category', 'description', 'emoji', 'color'].every((field) => deck[field] === undefined || typeof deck[field] === 'string') &&
     deck.questions.every((question) =>
       question && typeof question.q === 'string' && question.q.trim() &&
       Array.isArray(question.options) && question.options.length === 4 &&
@@ -31,4 +32,16 @@ export function normalizeDecks(decks, existing = []) {
 
 export function newQuestion() {
   return { id: createId(), q: '', options: ['', '', '', ''], correct: 0, explain: '' };
+}
+
+const coverColors = ['#dce8d5', '#d9e2f2', '#f1e4cc', '#f2dce1', '#e9e6c9', '#e0ddee'];
+const coverEmojis = ['💻', '🐍', '🗃️', '🎨', '🌱', '✨'];
+
+export function getDeckAppearance(deck, index = 0) {
+  return {
+    category: deck.category?.trim() || 'Made by you',
+    description: deck.description?.trim() || 'A fresh challenge, made for the curious.',
+    emoji: deck.emoji?.trim() || coverEmojis[index % coverEmojis.length],
+    color: /^#[0-9a-f]{6}$/i.test(deck.color ?? '') ? deck.color : coverColors[index % coverColors.length],
+  };
 }

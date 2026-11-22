@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Download, LoaderCircle, Plus, Upload, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
-  Alert, AppBar, Button, CircularProgress, Container, Dialog,
-  DialogActions, DialogContent, DialogContentText, DialogTitle, Stack, Toolbar, Typography,
-} from '@mui/material';
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import DeckList from './components/DeckList.jsx';
 import DeckEditor from './components/DeckEditor.jsx';
 import Game from './components/Game.jsx';
@@ -17,8 +21,11 @@ export default function App() {
   const [loadStatus, setLoadStatus] = useState('loading');
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [notice, setNotice] = useState(null);
-  const titleRef = useRef(null);
+  const [importing, setImporting] = useState(false);
+  const importingRef = useRef(false);
   const importRef = useRef(null);
+  const returnFocusRef = useRef(null);
+  const newGameRef = useRef(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -28,12 +35,12 @@ export default function App() {
         const response = await fetch(`${import.meta.env.BASE_URL}data/decks.json`, { signal: controller.signal });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        if (!Array.isArray(data) || !data.every(validateDeck)) throw new Error('Некорректный формат игр');
+        if (!Array.isArray(data) || !data.every(validateDeck)) throw new Error('Invalid quiz data');
         if (!controller.signal.aborted) {
           setDecks(normalizeDecks(data));
           setLoadStatus('ready');
         }
-      } catch (error) {
+      } catch {
         if (!controller.signal.aborted) setLoadStatus('error');
       }
     }
@@ -41,9 +48,19 @@ export default function App() {
     return () => controller.abort();
   }, [loadAttempt]);
 
-  useEffect(() => { titleRef.current?.focus(); }, [screen]);
+  function rememberFocus() {
+    returnFocusRef.current = document.activeElement;
+    setNotice(null);
+  }
+
+  function restoreFocus(event) {
+    event.preventDefault();
+    const target = returnFocusRef.current?.isConnected ? returnFocusRef.current : newGameRef.current;
+    target?.focus();
+  }
 
   function openEditor(deck = null) {
+    rememberFocus();
     setEditingDeck(deck);
     setScreen('editor');
   }
@@ -51,23 +68,28 @@ export default function App() {
   function saveDeck(deck) {
     setDecks((current) => editingDeck
       ? current.map((item) => item.id === editingDeck.id ? deck : item)
-      : [...current, deck]);
-    setNotice({ severity: 'success', text: 'Игра сохранена. Можно начинать!' });
+      : [deck, ...current]);
+    setNotice({ severity: 'success', text: 'Your quiz is ready to play.' });
     setScreen('list');
   }
 
   async function importDecks(event) {
     const file = event.target.files?.[0];
     event.target.value = '';
-    if (!file) return;
+    if (!file || importingRef.current) return;
+    importingRef.current = true;
+    setImporting(true);
     try {
       const data = JSON.parse(await file.text());
       const items = Array.isArray(data) ? data : [data];
-      if (!items.length || !items.every(validateDeck)) throw new Error('Проверьте название, вопросы, четыре варианта и индекс правильного ответа (0–3).');
+      if (!items.length || !items.every(validateDeck)) throw new Error('Each quiz needs a name, at least one question, four answers and a correct answer index (0–3).');
       setDecks((current) => [...current, ...normalizeDecks(items, current)]);
-      setNotice({ severity: 'success', text: `Импортировано игр: ${items.length}.` });
+      setNotice({ severity: 'success', text: `Imported ${items.length} quiz(es).` });
     } catch (error) {
-      setNotice({ severity: 'error', text: `Не удалось импортировать JSON. ${error.message}` });
+      setNotice({ severity: 'error', text: `Could not import JSON. ${error.message}` });
+    } finally {
+      importingRef.current = false;
+      setImporting(false);
     }
   }
 
@@ -81,47 +103,66 @@ export default function App() {
   }
 
   return (
-    <>
-      <AppBar position="sticky" color="transparent" sx={{ bgcolor: 'rgba(15,18,38,.94)', backdropFilter: 'blur(8px)' }}>
-        <Toolbar sx={{ gap: 2, flexWrap: 'wrap', py: 1 }}>
-          <Typography component="div" variant="h3" sx={{ flexGrow: 1 }}>🎯 Quiz-карточки</Typography>
-          <Stack component="nav" aria-label="Основная навигация" direction="row" spacing={1}>
-            <Button onClick={() => setScreen('list')} aria-current={screen === 'list' ? 'page' : undefined}>Игры</Button>
-            <Button variant="contained" disabled={loadStatus !== 'ready'} onClick={() => openEditor()}>+ Новая игра</Button>
-          </Stack>
-        </Toolbar>
-      </AppBar>
-      <Container component="main" maxWidth="md" sx={{ py: 4, pb: 8 }}>
-        {notice && <Alert severity={notice.severity} onClose={() => setNotice(null)} sx={{ mb: 3 }}>{notice.text}</Alert>}
-        {screen === 'list' && <>
-          <Typography ref={titleRef} tabIndex={-1} className="screen-title" variant="h1" gutterBottom>Выбери игру</Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>15 секунд на вопрос · 4 варианта · прогресс не сохраняется</Typography>
-          {loadStatus === 'loading' && <Stack role="status" direction="row" spacing={2} alignItems="center"><CircularProgress size={24} /><span>Загружаем игры…</span></Stack>}
-          {loadStatus === 'error' && <Alert severity="error" action={<Button color="inherit" onClick={() => setLoadAttempt((value) => value + 1)}>Повторить</Button>}>Не удалось загрузить игры. Проверьте соединение и повторите попытку.</Alert>}
+    <div className="shell">
+      <a className="skip-link" href="#games">Skip to quizzes</a>
+      <header className="topbar">
+        <a href="#" className="brand" aria-label="Quiz Club home"><span className="brandmark" aria-hidden="true">q</span>quiz club</a>
+        <nav aria-label="Main navigation"><a className="nav-link" href="#games" aria-current="page">Games</a></nav>
+      </header>
+      <main>
+        <section className="hero" aria-labelledby="hero-title">
+          <div>
+            <p className="eyebrow">Your next little challenge</p>
+            <h1 id="hero-title">Make curiosity<br />your superpower.</h1>
+            <p className="sub">Pick a quiz, trust your gut, and see what you know.</p>
+          </div>
+          <Button ref={newGameRef} size="lg" disabled={loadStatus !== 'ready'} onClick={() => openEditor()}><Plus />New game</Button>
+        </section>
+        {notice && <Alert variant={notice.severity === 'error' ? 'destructive' : 'default'} className={`notice notice-${notice.severity}`} role={notice.severity === 'error' ? 'alert' : 'status'}>
+          <AlertDescription>{notice.text}</AlertDescription>
+          <Button variant="ghost" size="icon-sm" className="notice-close" aria-label="Dismiss message" onClick={() => setNotice(null)}><X /></Button>
+        </Alert>}
+        <section id="games" aria-labelledby="games-title" tabIndex={-1}>
+          <div className="sectionhead"><h2 id="games-title">Find your next quiz</h2><span>{loadStatus === 'ready' ? `${decks.length} games` : 'Your collection'}</span></div>
+          {loadStatus === 'loading' && <div className="state-panel" role="status"><LoaderCircle className="animate-spin" /><h3>Getting your quizzes ready…</h3><p>Just a moment. Your next challenge is on its way.</p></div>}
+          {loadStatus === 'error' && <Alert variant="destructive" className="state-panel"><AlertTitle>Could not load quizzes</AlertTitle><AlertDescription>Check your connection and try again.</AlertDescription><Button variant="outline" onClick={() => setLoadAttempt((value) => value + 1)}>Try again <ArrowRight /></Button></Alert>}
           {loadStatus === 'ready' && <>
-            <DeckList decks={decks} onPlay={(deck) => { setPlayingDeck(deck); setScreen('play'); }} onEdit={openEditor} onDelete={setDeletingDeck} />
-            <Stack direction="row" spacing={2} useFlexGap flexWrap="wrap" sx={{ mt: 3 }}>
-              <Button variant="outlined" onClick={() => importRef.current.click()}>Импорт JSON</Button>
-              <input ref={importRef} type="file" accept="application/json,.json" hidden onChange={importDecks} />
-              <Button variant="outlined" onClick={exportDecks}>Скачать все игры</Button>
-            </Stack>
-            <Typography color="text.secondary" variant="body2" sx={{ mt: 2 }}>Изменения хранятся до перезагрузки страницы. Скачайте JSON, чтобы сохранить свои игры.</Typography>
+            <DeckList decks={decks} onCreate={() => openEditor()} onPlay={(deck) => { rememberFocus(); setPlayingDeck(deck); setScreen('play'); }} onEdit={openEditor} onDelete={(deck) => { rememberFocus(); setDeletingDeck(deck); }} />
+            <div className="collection-tools">
+              <div className="tool-buttons">
+                <Button variant="outline" disabled={importing} onClick={() => importRef.current.click()}>{importing ? <LoaderCircle className="animate-spin" /> : <Upload />}{importing ? 'Importing…' : 'Import JSON'}</Button>
+                <input ref={importRef} type="file" accept="application/json,.json" hidden onChange={importDecks} />
+                <Button variant="ghost" onClick={exportDecks}><Download />Export quizzes</Button>
+              </div>
+              <p>Made a quiz? Export it to keep it.<br />Changes stay here until you refresh.</p>
+            </div>
           </>}
-        </>}
-        {screen === 'editor' && <DeckEditor key={editingDeck?.id ?? 'new'} deck={editingDeck} onSave={saveDeck} onCancel={() => setScreen('list')} />}
-        {screen === 'play' && playingDeck && <Game deck={playingDeck} onHome={() => setScreen('list')} />}
-      </Container>
-      <Dialog open={Boolean(deletingDeck)} onClose={() => setDeletingDeck(null)} aria-labelledby="delete-title" aria-describedby="delete-description">
-        <DialogTitle id="delete-title">Удалить игру?</DialogTitle>
-        <DialogContent><DialogContentText id="delete-description">Игра «{deletingDeck?.title}» будет удалена из текущего списка.</DialogContentText></DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={() => setDeletingDeck(null)}>Отмена</Button>
-          <Button color="error" onClick={() => {
-            setDecks((current) => current.filter((deck) => deck.id !== deletingDeck.id));
-            setDeletingDeck(null);
-          }}>Удалить</Button>
-        </DialogActions>
+        </section>
+      </main>
+      <footer className="footer"><span>Little quizzes. Big brain energy.</span><span>Made for the curious.</span></footer>
+      <Dialog open={screen === 'editor'} onOpenChange={(open) => { if (!open) setScreen('list'); }}>
+        <DialogContent className="editor-dialog" onCloseAutoFocus={restoreFocus}>
+          <DeckEditor key={editingDeck?.id ?? 'new'} deck={editingDeck} onSave={saveDeck} onCancel={() => setScreen('list')} />
+        </DialogContent>
       </Dialog>
-    </>
+      <Dialog open={screen === 'play'} onOpenChange={(open) => { if (!open) setScreen('list'); }}>
+        <DialogContent className="game-dialog" showCloseButton={false} onOpenAutoFocus={(event) => event.preventDefault()} onCloseAutoFocus={restoreFocus}>
+          {screen === 'play' && playingDeck && <Game key={playingDeck.id} deck={playingDeck} onHome={() => setScreen('list')} />}
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={Boolean(deletingDeck)} onOpenChange={(open) => { if (!open) setDeletingDeck(null); }}>
+        <AlertDialogContent onCloseAutoFocus={restoreFocus}>
+          <AlertDialogHeader><AlertDialogTitle>Delete this quiz?</AlertDialogTitle><AlertDialogDescription>“{deletingDeck?.title}” will be removed from this session. You can import it again if you have an exported copy.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={() => {
+              setDecks((current) => current.filter((deck) => deck.id !== deletingDeck.id));
+              setDeletingDeck(null);
+              setNotice({ severity: 'success', text: 'Quiz removed from your collection.' });
+            }}>Delete quiz</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }

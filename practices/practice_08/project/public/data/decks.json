@@ -2,6 +2,10 @@
   {
     "id": "demo-it",
     "title": "Основы IT",
+    "category": "Technology",
+    "description": "From markup to the language of the web.",
+    "emoji": "💻",
+    "color": "#dce8d5",
     "questions": [
       {
         "id": "q1",
@@ -37,6 +41,10 @@
   {
     "id": "demo-python",
     "title": "Python-база",
+    "category": "Programming",
+    "description": "A little Python. A little brain exercise.",
+    "emoji": "🐍",
+    "color": "#d9e2f2",
     "questions": [
       {
         "id": "q1",
@@ -55,6 +63,10 @@
   {
     "id": "deck-db-relalgebra",
     "title": "Реляционная алгебра (лекция 5)",
+    "category": "Databases",
+    "description": "Explore the ideas behind your next query.",
+    "emoji": "🗃️",
+    "color": "#f1e4cc",
     "questions": [
       {
         "id": "q1",
