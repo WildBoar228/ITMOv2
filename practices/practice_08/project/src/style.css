@@ -118,6 +118,11 @@
 .field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 15px; min-width: 0; }
 .field [data-slot="label"], .answer-fields legend { font-size: 11px; font-weight: 700; color: #526058; line-height: 1.4; }
 .optional { font-weight: 400; color: var(--muted-text); }
+.field-hint { font-size: 11px; color: var(--muted-text); line-height: 1.5; }
+.color-picker { display: flex; align-items: center; gap: 12px; min-height: 42px; }
+.color-picker [data-slot="input"] { width: 64px; height: 42px; min-height: 42px; padding: 4px; cursor: pointer; }
+.color-picker > span { font-size: 12px; color: var(--muted-text); }
+.cover-preview { height: 100px; margin-bottom: 20px; }
 [data-slot="input"] { background: #fcfdfa; color: var(--foreground); border: 1px solid #dce3d9; border-radius: 10px; height: auto; min-height: 42px; padding: 11px 12px; font-size: 13px; box-shadow: none; }
 [data-slot="input"]::placeholder { color: #7a847d; }
 [data-slot="input"]:focus-visible { outline: none; border-color: #7aa188; box-shadow: 0 0 0 3px #5b986226; }
@@ -145,7 +150,8 @@
 .timer svg { width: 16px; height: 16px; }
 .timer-warning { background: #fff0e8; color: #a34e2d; }
 .game-progress { height: 5px; background: #edf0eb; border-radius: 10px; margin: 19px 0 30px; }
-.game-progress [data-slot="progress-indicator"] { background: #8ab772; }
+.game-progress [data-slot="progress-indicator"] { background: #8ab772; transition: transform .1s linear; }
+.game-progress.timer-warning [data-slot="progress-indicator"] { background: #c76640; }
 .game-dialog .question-title { font: 800 26px/1.3 'Manrope', system-ui, sans-serif; letter-spacing: -.7px; margin: 0 0 22px; }
 .question-title:focus, .result [data-slot="dialog-title"]:focus { outline: none; }
 .answers { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }

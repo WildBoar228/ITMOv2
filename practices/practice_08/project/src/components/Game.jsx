@@ -50,7 +50,7 @@ function Question({ question, title, index, total, score, onNext, onHome }) {
   const isCorrect = answer?.choice === question.correct;
   return <>
     <div className="game-top"><span className="game-label">{title} · {index + 1} of {total}</span><div className={cn('timer', timeLeft <= 5 && 'timer-warning')} aria-label={`${Math.ceil(timeLeft)} seconds remaining`}><Clock3 aria-hidden="true" /><span>{Math.ceil(timeLeft)} s</span></div></div>
-    <Progress className="game-progress" value={index / total * 100} aria-label="Quiz progress" />
+    <Progress className={cn('game-progress', timeLeft <= 5 && 'timer-warning')} value={timeLeft / TIME_PER_QUESTION * 100} aria-label="Time remaining" aria-valuetext={`${Math.ceil(timeLeft)} seconds remaining`} />
     <DialogTitle ref={titleRef} tabIndex={-1} className="question-title">{question.q}</DialogTitle>
     <DialogDescription className="sr-only">Choose one of four answers. You have 15 seconds. After answering, continue to the next question.</DialogDescription>
     <div className="answers">

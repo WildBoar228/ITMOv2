@@ -2,12 +2,13 @@ import { useRef, useState } from 'react';
 import { ArrowRight, Plus, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { createId, newQuestion, validateDeck } from '../decks.js';
+import { createId, getDeckAppearance, newQuestion, validateDeck } from '../decks.js';
 
 const letters = ['A', 'B', 'C', 'D'];
 
@@ -15,12 +16,15 @@ export default function DeckEditor({ deck, onSave, onCancel }) {
   const [title, setTitle] = useState(deck?.title ?? '');
   const [category, setCategory] = useState(deck?.category ?? '');
   const [description, setDescription] = useState(deck?.description ?? '');
+  const [emoji, setEmoji] = useState(deck?.emoji ?? '');
+  const [color, setColor] = useState(() => getDeckAppearance(deck ?? {}).color);
   const [questions, setQuestions] = useState(() => deck
     ? deck.questions.map((question) => ({ ...question, id: createId(), options: [...question.options] }))
     : [newQuestion()]);
   const [error, setError] = useState('');
   const errorRef = useRef(null);
   const saving = useRef(false);
+  const appearance = getDeckAppearance({ category, emoji, color });
 
   function updateQuestion(id, patch) {
     setQuestions((current) => current.map((question) => question.id === id ? { ...question, ...patch } : question));
@@ -31,7 +35,7 @@ export default function DeckEditor({ deck, onSave, onCancel }) {
     if (saving.current) return;
     const result = {
       ...deck, id: deck?.id ?? createId(), title: title.trim(),
-      category: category.trim(), description: description.trim(),
+      category: category.trim(), description: description.trim(), emoji: emoji.trim(), color,
       questions: questions.map((question, index) => ({
         id: `q${index + 1}`, q: question.q.trim(), options: question.options.map((option) => option.trim()),
         correct: question.correct,
@@ -55,6 +59,11 @@ export default function DeckEditor({ deck, onSave, onCancel }) {
         <div className="field"><Label htmlFor="game-category">Category <span className="optional">· optional</span></Label><Input id="game-category" maxLength={40} placeholder="e.g. Food & drink" value={category} onChange={(event) => setCategory(event.target.value)} /></div>
       </div>
       <div className="field"><Label htmlFor="game-description">Description <span className="optional">· optional</span></Label><Input id="game-description" maxLength={160} placeholder="A little introduction to your quiz" value={description} onChange={(event) => setDescription(event.target.value)} /></div>
+      <div className="form-row">
+        <div className="field"><Label htmlFor="game-emoji">Cover emoji <span className="optional">· optional</span></Label><Input id="game-emoji" maxLength={32} placeholder="e.g. ☕" aria-describedby="emoji-hint" value={emoji} onChange={(event) => setEmoji(event.target.value)} /><p id="emoji-hint" className="field-hint">Paste an emoji or leave blank for the default.</p></div>
+        <div className="field"><Label htmlFor="game-color">Cover color</Label><div className="color-picker"><Input id="game-color" type="color" value={color} onChange={(event) => setColor(event.target.value)} /><span>{color}</span></div></div>
+      </div>
+      <div className="quiz-cover cover-preview" role="img" aria-label={`Cover preview: ${appearance.emoji}, ${appearance.category}`} style={{ backgroundColor: appearance.color }}><span className="cover-emoji" aria-hidden="true">{appearance.emoji}</span><Badge className="category-badge">{appearance.category}</Badge></div>
       {questions.map((question, index) => <Card key={question.id} className="question-card">
         <CardContent>
           <div className="question-card-head"><h3 id={`question-${question.id}`}>Question {index + 1}</h3><Button type="button" variant="ghost" size="icon-xs" aria-label={`Remove question ${index + 1}`} onClick={() => setQuestions((current) => current.filter((item) => item.id !== question.id))}><Trash2 /></Button></div>
