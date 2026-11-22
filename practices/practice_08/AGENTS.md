@@ -10,7 +10,8 @@
 - `project/src/components/ui/` — готовые компоненты shadcn/ui, добавленные CLI; конфигурация — `project/components.json`. Переиспользуй их при доработке интерфейса.
 - Стек: React + Vite + shadcn/ui + Tailwind CSS, JavaScript. Изменения игр и прогресс хранятся только в памяти страницы.
 - Внешний вид — по `prototype.html` и `prototype_screenshots/`: светлая палитра, пастельные карточки, модальные редактор и игра. Оболочка на английском, исходные вопросы на русском.
-- Команды из `project/`: `npm ci`, `npm run dev`, `npm run build`. Подробности — в `project/README.md`. Клиентские тесты пока не добавлены.
+- Команды из `project/`: `npm ci`, `npm run dev`, `npm run build`. Тесты: `npx playwright install chromium`, `npm test` — 20 сценариев в Chromium на обычном и узком экране. Подробности — в `project/README.md`.
+- `prototype.html` — кликабельный экспорт из 15 актуальных экранов; `npm run prototype:export` переснимает их с приложения в `prototype_screenshots/`.
 
 ## Основной пользовательский сценарий
 
