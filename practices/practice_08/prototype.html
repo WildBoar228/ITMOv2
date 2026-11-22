@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8f5">
+  <title>Quiz Club — актуальный макет</title>
+  <style>
+    :root { color: #18221d; background: #f7f8f5; font-family: system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header { padding: 24px 32px; border-bottom: 1px solid #e1e7de; }
+    h1 { font-size: 24px; margin: 0 0 8px; letter-spacing: -.7px; }
+    p { line-height: 1.6; margin: 0; }
+    header p { color: #526058; font-size: 13px; max-width: 900px; }
+    .layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: calc(100vh - 130px); }
+    aside { padding: 24px; border-right: 1px solid #e1e7de; }
+    nav { display: grid; gap: 5px; }
+    a { color: #315b46; }
+    nav a { text-decoration: none; padding: 9px 12px; border-radius: 9px; font-size: 13px; }
+    nav a:hover { background: #e9efe4; }
+    nav a[aria-current="page"] { background: #315b46; color: white; font-weight: 700; }
+    :focus-visible { outline: 3px solid #527b60; outline-offset: 3px; }
+    .aside-note { font-size: 12px; margin-top: 24px; color: #526058; }
+    main { padding: 24px; min-width: 0; }
+    h2 { font-size: 20px; margin: 0 0 8px; }
+    #description { color: #526058; font-size: 13px; max-width: 900px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 20px; }
+    .actions a { background: white; border: 1px solid #dce3d9; border-radius: 9px; padding: 9px 12px; text-decoration: none; font-size: 12px; font-weight: 600; }
+    .preview { background: #e9ece7; border: 1px solid #dce3d9; border-radius: 14px; padding: 8px; text-align: center; }
+    .preview img { display: block; max-width: 100%; height: auto; margin: auto; border-radius: 8px; }
+    .preview.mobile img { max-width: min(100%, 375px); }
+    figcaption { color: #526058; font-size: 12px; margin-top: 10px; }
+    figure { margin: 0; }
+    code { font-size: 11px; overflow-wrap: anywhere; }
+    @media (max-width: 760px) {
+      header { padding: 20px; }
+      .layout { grid-template-columns: 1fr; }
+      aside { padding: 14px; border-right: 0; border-bottom: 1px solid #e1e7de; }
+      nav { display: flex; overflow-x: auto; padding: 4px; }
+      nav a { white-space: nowrap; }
+      .aside-note { display: none; }
+      main { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Quiz Club · макет интерфейса</h1>
+    <p>Актуализированный кликабельный экспорт исходного AI-прототипа. Экраны сняты с React-интерфейса на shadcn/ui. Ссылки ниже показывают последовательность сценария и альтернативные состояния; работающая логика находится в <code>project/</code>.</p>
+  </header>
+  <div class="layout">
+    <aside>
+      <nav aria-label="Экраны макета" id="navigation"></nav>
+      <p class="aside-note">Обновление экспорта из <code>project/</code>:<br><code>npm run prototype:export</code><br><br>Оформление: светлый фон, зелёный акцент, пастельные обложки, DM Sans и Manrope. Содержимое — реальные учебные викторины.</p>
+    </aside>
+    <main>
+      <h2 id="screen-title">Список игр</h2>
+      <p id="description"></p>
+      <div class="actions" id="actions" aria-label="Переходы сценария"></div>
+      <figure>
+        <div class="preview" id="preview"><img id="screen" src="prototype_screenshots/prototype_screen1.png" alt="Главный экран Quiz Club"></div>
+        <figcaption>Экспорт экрана: <a id="original" href="prototype_screenshots/prototype_screen1.png">открыть в исходном размере</a>. В редакторе длинная форма прокручивается; она показана двумя экранами.</figcaption>
+      </figure>
+    </main>
+  </div>
+  <script>
+    const screens = {
+      list: ['Список игр', 'prototype_screen1.png', 'Карточки с категориями, описаниями, эмодзи и цветом обложки. Доступны создание, правка, удаление, импорт и экспорт JSON.', [['editor', 'New game →'], ['game', 'Play quiz →'], ['delete', 'Удалить игру'], ['loading', 'Загрузка']]],
+      editor: ['Редактор: оформление', 'prototype_screen_new_game.png', 'Название, категория, описание, эмодзи и цвет. Обложка обновляется при вводе. Поля связаны с подписями, текущий фокус выделен.', [['questions', 'Ниже: вопросы →'], ['list', 'Cancel →']]],
+      questions: ['Редактор: вопросы', 'prototype_screen_editor_questions.png', 'Текст вопроса, четыре варианта, Select правильного ответа, пояснение. Можно добавлять и удалять вопросы. После Save game игра появляется в списке.', [['success', 'Save game →'], ['validation', 'Некорректный ввод'], ['editor', '↑ Оформление']]],
+      game: ['Викторина', 'prototype_screen_game.png', 'Полоса показывает оставшееся время и убывает за 15 секунд. До ответа кнопка продолжения недоступна. Внизу — текущие очки и выход к списку.', [['answer', 'Выбрать ответ →'], ['timeout', 'Время истекло →'], ['list', 'All games →']]],
+      answer: ['Обратная связь', 'prototype_screen_answer.png', 'Ответ блокируется от повторного выбора. Правильный вариант выделен и обозначен галочкой; показаны очки и пояснение. Фокус переходит на продолжение.', [['result', 'Пройти остальные вопросы →'], ['game', 'Следующий вопрос →']]],
+      timeout: ['Таймаут', 'prototype_screen_timeout.png', 'По истечении времени полоса пуста, ответы заблокированы, показан правильный вариант. Можно продолжить прохождение.', [['game', 'Next question →'], ['list', 'All games →']]],
+      result: ['Результат', 'prototype_screen_result.png', 'Итоговые очки, число правильных ответов и точность. Доступны повторное прохождение и возврат к коллекции.', [['game', 'Play again →'], ['list', 'All games →']]],
+      success: ['Успешное сохранение', 'prototype_screen_success.png', 'Новая игра добавлена в коллекцию. Сообщение подтверждает успех. Изменения хранятся в памяти страницы; экспорт позволяет сохранить файл.', [['game', 'Play quiz →'], ['list', 'Закрыть сообщение →']]],
+      delete: ['Подтверждение удаления', 'prototype_screen_delete.png', 'AlertDialog называет удаляемую игру. По умолчанию фокус на безопасном действии Cancel. После удаления фокус возвращается на доступную кнопку.', [['list', 'Cancel →'], ['empty', 'Коллекция после удаления всех игр →']]],
+      loading: ['Загрузка', 'prototype_screen_loading.png', 'Вместо пустого списка показан индикатор ожидания и пояснение. Создание игры недоступно, пока загружается исходная коллекция.', [['list', 'Данные получены →'], ['error', 'Ошибка загрузки →'], ['empty', 'Пустой ответ →']]],
+      empty: ['Пустая коллекция', 'prototype_screen_empty.png', 'Понятное пустое состояние с предложением создать игру или импортировать JSON. Оно отличается от ошибки загрузки.', [['editor', 'Create a quiz →'], ['list', 'Импортировать игры →']]],
+      error: ['Ошибка загрузки', 'prototype_screen_error.png', 'Сообщение об ошибке и действие Try again. Повторная попытка снова показывает загрузку, затем данные или ошибку.', [['loading', 'Try again →']]],
+      validation: ['Ошибка формы', 'prototype_screen_validation.png', 'Некорректные данные не сохраняются. Сообщение получает фокус; введённые значения остаются в форме для исправления.', [['questions', 'Исправить данные →']]],
+      mobile: ['Телефон: коллекция', 'prototype_screen_mobile.png', 'На ширине 375 px карточки идут в одну колонку. Кнопки создания, правки, удаления и импорта/экспорта доступны.', [['mobileGame', 'Play quiz →'], ['editor', 'New game →']]],
+      mobileGame: ['Телефон: викторина', 'prototype_screen_mobile_game.png', 'Ответы расположены в одну колонку, диалог прокручивается при необходимости. Все действия доступны с клавиатуры.', [['result', 'Завершить →'], ['mobile', 'All games →']]],
+    };
+    const nav = document.getElementById('navigation');
+    for (const [id, [title]] of Object.entries(screens)) {
+      const link = document.createElement('a');
+      link.href = '#' + id;
+      link.textContent = title;
+      nav.append(link);
+    }
+    function render() {
+      const id = Object.hasOwn(screens, location.hash.slice(1)) ? location.hash.slice(1) : 'list';
+      const [title, file, description, actions] = screens[id];
+      document.getElementById('screen-title').textContent = title;
+      document.getElementById('description').textContent = description;
+      const image = document.getElementById('screen');
+      image.src = 'prototype_screenshots/' + file;
+      image.alt = title + '. ' + description;
+      document.getElementById('original').href = image.src;
+      document.getElementById('preview').classList.toggle('mobile', id.startsWith('mobile'));
+      for (const link of nav.children) {
+        if (link.hash === '#' + id) link.setAttribute('aria-current', 'page');
+        else link.removeAttribute('aria-current');
+      }
+      const container = document.getElementById('actions');
+      container.replaceChildren();
+      for (const [target, label] of actions) {
+        const link = document.createElement('a');
+        link.href = '#' + target;
+        link.textContent = label;
+        container.append(link);
+      }
+    }
+    addEventListener('hashchange', render);
+    render();
+  </script>
+</body>
+</html>
